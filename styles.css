@@ -1,23 +1,50 @@
-﻿body {
+﻿body{
     margin:0;
     font-family:'Segoe UI';
     background:#020617;
     color:white;
 }
 
-.app {
+/* LOGIN */
+#login-screen{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.login-box{
+    background:#0f172a;
+    padding:40px;
+    border-radius:15px;
+    text-align:center;
+}
+
+.login-box input{
+    display:block;
+    margin:10px auto;
+    padding:10px;
+    width:200px;
+}
+
+/* APP */
+.app{
     display:flex;
 }
 
+.hidden{
+    display:none;
+}
+
 /* SIDEBAR */
-.sidebar {
-    width:220px;
+.sidebar{
+    width:230px;
     background:#0f172a;
     padding:20px;
     height:100vh;
 }
 
-.sidebar button {
+.sidebar button{
     width:100%;
     margin:10px 0;
     padding:10px;
@@ -28,57 +55,52 @@
     cursor:pointer;
 }
 
-.sidebar button:hover {
+.sidebar button:hover{
     background:#3b82f6;
 }
 
+.logout{
+    background:red;
+}
+
 /* MAIN */
-.main {
+.main{
     flex:1;
     padding:30px;
 }
 
-.hidden {
-    display:none;
-}
-
 /* SALDO */
-.saldo {
-    font-size:50px;
-    margin-bottom:20px;
+.saldo{
+    font-size:55px;
 }
 
 /* TARJETA */
-.card-bank {
-    background:linear-gradient(135deg,#6366f1,#22c55e);
+.card-bank{
+    margin-top:20px;
     padding:20px;
     border-radius:15px;
-    width:300px;
+    background:linear-gradient(135deg,#6366f1,#22c55e);
 }
 
-/* INPUT */
-input, select {
-    display:block;
+/* CAMPOS */
+input, select{
     margin:10px 0;
     padding:10px;
     width:250px;
-    border-radius:8px;
-    border:none;
+    display:block;
 }
 
 /* BOTONES */
-button {
+button{
     padding:10px;
     border:none;
     border-radius:8px;
     background:#22c55e;
-    color:white;
 }
 
 /* LISTA */
-li {
+li{
     background:#1e293b;
     padding:10px;
     margin:5px 0;
-    border-radius:8px;
 }

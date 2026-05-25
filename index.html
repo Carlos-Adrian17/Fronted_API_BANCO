@@ -9,7 +9,20 @@
 
 <body>
 
-<div class="app">
+<!-- ================= LOGIN ================= -->
+<div id="login-screen">
+    <div class="login-box">
+        <h1>Banco Premium</h1>
+
+        <input id="dpiLogin" placeholder="DPI">
+        <input id="passLogin" type="password" placeholder="Contraseña">
+
+        <button onclick="login()">Ingresar</button>
+    </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app" class="app hidden">
 
 <!-- SIDEBAR -->
 <div class="sidebar">
@@ -20,7 +33,7 @@
     <button onclick="mostrar('pagos')">🧾 Pagos</button>
     <button onclick="mostrar('movimientos')">📊 Movimientos</button>
 
-    <button onclick="logout()">🔴 Salir</button>
+    <button class="logout" onclick="logout()">Salir</button>
 </div>
 
 <!-- MAIN -->
@@ -38,7 +51,7 @@
     </div>
 </div>
 
-<!-- TRANSFERENCIA -->
+<!-- TRANSFER -->
 <div id="transfer" class="section hidden">
     <h2>Transferencia</h2>
     <input id="cuentaDestino" placeholder="Cuenta destino">
@@ -48,12 +61,12 @@
 
 <!-- PAGOS -->
 <div id="pagos" class="section hidden">
-    <h2>Pago de Servicios</h2>
+    <h2>Pagos</h2>
     <input id="pagoMonto" placeholder="Monto">
     <select id="tipoServicio">
         <option>Netflix</option>
         <option>Teléfono</option>
-        <option>Donación</option>
+        <option>Donaciones</option>
     </select>
     <button onclick="pagar()">Pagar</button>
 </div>
