@@ -1,0 +1,98 @@
+﻿body{
+    margin:'Segoe UI';    margin:0;
+    background: linear-gradient(135deg,#020617,#0f172a);
+    color:white;
+}
+
+/* CONTENEDORES */
+.container{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.hidden{
+    display:none;
+}
+
+/* CARD LOGIN */
+.card{
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(20px);
+    padding:30px;
+    border-radius:20px;
+    width:320px;
+    text-align:center;
+}
+
+/* INPUTS */
+input{
+    width:100%;
+    padding:12px;
+    margin:10px 0;
+    border:none;
+    border-radius:10px;
+    background:#0f172a;
+    color:white;
+}
+
+/* BOTONES */
+button{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border:none;
+    border-radius:10px;
+    background: linear-gradient(90deg,#6366f1,#22c55e);
+    color:white;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+button:hover{
+    opacity:0.8;
+}
+
+/* DASHBOARD */
+#dashboard{
+    padding:20px;
+}
+
+header{
+    display:flex;
+    justify-content:space-between;
+}
+
+/* TARJETA */
+.card-bank{
+    background: linear-gradient(135deg,#6366f1,#22c55e);
+    padding:20px;
+    border-radius:20px;
+    margin:20px 0;
+}
+
+/* GRID */
+.grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
+/* SALDO */
+.saldo{
+    font-size:40px;
+}
+
+/* HISTORIAL */
+.historial ul{
+    list-style:none;
+    padding:0;
+}
+
+.historial li{
+    background: rgba(255,255,255,0.05);
+    margin:5px 0;
+    padding:10px;
+    border-radius:10px;
+}

@@ -1,0 +1,105 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Banco Digital Premium</title>
+
+<link rel="stylesheet" href="styles.css">
+
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div class="container" id="login">
+
+<div class="card">
+
+    <h1>Banco Digital</h1>
+    <p class="subtitle">Accede a tu cuenta</p>
+
+    <input id="dpiLogin" placeholder="DPI">
+    <input id="passLogin" type="password" placeholder="Contraseña">
+
+    <button onclick="login()">Ingresar</button>
+
+    <p class="toggle" onclick="mostrarRegistro()">¿No tienes cuenta? Crear cuenta</p>
+
+</div>
+
+</div>
+
+
+<!-- ================= REGISTRO ================= -->
+<div class="container hidden" id="registro">
+
+<div class="card">
+
+    <h1>Crear Cuenta</h1>
+
+    <input id="nombre" placeholder="Nombre completo">
+    <input id="dpiRegistro" placeholder="DPI">
+    <input id="passRegistro" type="password" placeholder="Contraseña">
+
+    <button onclick="registrar()">Registrarse</button>
+
+    <p class="toggle" onclick="mostrarLogin()">Volver al login</p>
+
+</div>
+
+</div>
+
+
+<!-- ================= DASHBOARD ================= -->
+<div id="dashboard" class="hidden">
+
+<header>
+    <h2>Mi Banco</h2>
+    <button onclick="logout()">Salir</button>
+</header>
+
+<!-- TARJETA -->
+<div class="card-bank">
+    <p>Banco Premium</p>
+    <h2 id="tarjeta">**** **** **** ****</h2>
+    <p id="cvv"></p>
+</div>
+
+<!-- SALDO -->
+<h1 class="saldo">Q<span id="saldo">0</span></h1>
+
+<!-- ACCIONES -->
+<div class="grid">
+
+<div>
+    <h3>Depositar</h3>
+    <input id="depositoMonto">
+    <button onclick="depositar()">Depositar</button>
+</div>
+
+<div>
+    <h3>Pagar</h3>
+    <input id="pagoMonto">
+    <button onclick="pagar()">Pagar</button>
+</div>
+
+<div>
+    <h3>Transferir</h3>
+    <input id="cuentaDestino" placeholder="Cuenta destino">
+    <input id="montoTransfer" placeholder="Monto">
+    <button onclick="transferir()">Transferir</button>
+</div>
+
+</div>
+
+<!-- HISTORIAL -->
+<div class="historial">
+    <h3>Movimientos</h3>
+    <ul id="movimientos"></ul>
+</div>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
