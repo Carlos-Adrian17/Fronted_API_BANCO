@@ -2,104 +2,71 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Banco Digital Premium</title>
+<title>Banco Premium</title>
 
 <link rel="stylesheet" href="styles.css">
-
 </head>
+
 <body>
 
-<!-- ================= LOGIN ================= -->
-<div class="container" id="login">
+<div class="app">
 
-<div class="card">
-
-    <h1>Banco Digital</h1>
-    <p class="subtitle">Accede a tu cuenta</p>
-
-    <input id="dpiLogin" placeholder="DPI">
-    <input id="passLogin" type="password" placeholder="Contraseña">
-
-    <button onclick="login()">Ingresar</button>
-
-    <p class="toggle" onclick="mostrarRegistro()">¿No tienes cuenta? Crear cuenta</p>
-
-</div>
-
-</div>
-
-
-<!-- ================= REGISTRO ================= -->
-<div class="container hidden" id="registro">
-
-<div class="card">
-
-    <h1>Crear Cuenta</h1>
-
-    <input id="nombre" placeholder="Nombre completo">
-    <input id="dpiRegistro" placeholder="DPI">
-    <input id="passRegistro" type="password" placeholder="Contraseña">
-
-    <button onclick="registrar()">Registrarse</button>
-
-    <p class="toggle" onclick="mostrarLogin()">Volver al login</p>
-
-</div>
-
-</div>
-
-
-<!-- ================= DASHBOARD ================= -->
-<div id="dashboard" class="hidden">
-
-<header>
+<!-- SIDEBAR -->
+<div class="sidebar">
     <h2>Mi Banco</h2>
-    <button onclick="logout()">Salir</button>
-</header>
 
-<!-- TARJETA -->
-<div class="card-bank">
-    <p>Banco Premium</p>
-    <h2 id="tarjeta">**** **** **** ****</h2>
-    <p id="cvv"></p>
+    <button onclick="mostrar('dashboard')">🏠 Dashboard</button>
+    <button onclick="mostrar('transfer')">💸 Transferencias</button>
+    <button onclick="mostrar('pagos')">🧾 Pagos</button>
+    <button onclick="mostrar('movimientos')">📊 Movimientos</button>
+
+    <button onclick="logout()">🔴 Salir</button>
 </div>
 
-<!-- SALDO -->
-<h1 class="saldo">Q<span id="saldo">0</span></h1>
+<!-- MAIN -->
+<div class="main">
 
-<!-- ACCIONES -->
-<div class="grid">
+<!-- DASHBOARD -->
+<div id="dashboard" class="section">
+    <h1>Saldo Disponible</h1>
+    <h2 class="saldo">Q<span id="saldo">0.00</span></h2>
 
-<div>
-    <h3>Depositar</h3>
-    <input id="depositoMonto">
-    <button onclick="depositar()">Depositar</button>
+    <div class="card-bank">
+        <p>Banco Premium</p>
+        <h3 id="tarjeta"></h3>
+        <p id="cvv"></p>
+    </div>
 </div>
 
-<div>
-    <h3>Pagar</h3>
-    <input id="pagoMonto">
-    <button onclick="pagar()">Pagar</button>
-</div>
-
-<div>
-    <h3>Transferir</h3>
+<!-- TRANSFERENCIA -->
+<div id="transfer" class="section hidden">
+    <h2>Transferencia</h2>
     <input id="cuentaDestino" placeholder="Cuenta destino">
     <input id="montoTransfer" placeholder="Monto">
     <button onclick="transferir()">Transferir</button>
 </div>
 
+<!-- PAGOS -->
+<div id="pagos" class="section hidden">
+    <h2>Pago de Servicios</h2>
+    <input id="pagoMonto" placeholder="Monto">
+    <select id="tipoServicio">
+        <option>Netflix</option>
+        <option>Teléfono</option>
+        <option>Donación</option>
+    </select>
+    <button onclick="pagar()">Pagar</button>
 </div>
 
-<!-- HISTORIAL -->
-<div class="historial">
-    <h3>Movimientos</h3>
-    <ul id="movimientos"></ul>
+<!-- MOVIMIENTOS -->
+<div id="movimientos" class="section hidden">
+    <h2>Historial</h2>
+    <ul id="listaMovimientos"></ul>
 </div>
 
+</div>
 </div>
 
 <script src="app.js"></script>
-
 </body>
 </html>

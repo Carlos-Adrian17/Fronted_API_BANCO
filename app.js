@@ -1,185 +1,158 @@
-﻿let cuentaId = null;
+﻿const API = "https://api-banco-services.azurewebsites.net";
+let cuentaId = null;
 
-const API_URL = "https://api-banco-services.azurewebsites.net";
-
-// =========================
+// =====================
 // CAMBIO DE VISTAS
-// =========================
-function mostrarRegistro() {
-    document.getElementById("login").classList.add("hidden");
-    document.getElementById("registro").classList.remove("hidden");
+// =====================
+function mostrar(sec){
+    document.querySelectorAll(".section").forEach(s => s.classList.add("hidden"));
+    document.getElementById(sec).classList.remove("hidden");
+
+    if(sec === "movimientos") cargarMovimientos();
 }
 
-function mostrarLogin() {
-    document.getElementById("registro").classList.add("hidden");
-    document.getElementById("login").classList.remove("hidden");
+// =====================
+// FORMATO DINERO
+// =====================
+function formatMoney(num){
+    return Number(num).toLocaleString("es-GT", {
+        minimumFractionDigits:2
+    });
 }
 
-
-// =========================
+// =====================
 // LOGIN
-// =========================
-function login() {
-    let dpi = document.getElementById("dpiLogin").value;
-    let password = document.getElementById("passLogin").value;
+// =====================
+function login(){
 
-    fetch(`${API_URL}/api/Cliente/login?dpi=${dpi}&password=${password}`, {
-        method: "POST"
-    })
-    .then(res => {
-        if (!res.ok) throw new Error();
-        return res.json();
+    let dpi = document.getElementById("dpiLogin").value;
+    let pass = document.getElementById("passLogin").value;
+
+    fetch(`${API}/api/Cliente/login?dpi=${dpi}&password=${pass}`,{method:"POST"})
+    .then(r=>{
+        if(!r.ok) throw new Error();
+        return r.json();
     })
     .then(cliente => {
 
-        // Crear cuenta si no existe
-        return fetch(`${API_URL}/api/Cuenta/crear?clienteId=${cliente.id}`, {
-            method: "POST"
-        });
-
+        return fetch(`${API}/api/Cuenta/crear?clienteId=${cliente.id}`, {method:"POST"});
     })
-    .then(res => res.json())
+    .then(r=>r.json())
     .then(cuenta => {
 
         cuentaId = cuenta.id;
 
-        document.getElementById("login").classList.add("hidden");
-        document.getElementById("dashboard").classList.remove("hidden");
+        document.getElementById("login").style.display="none";
+        document.getElementById("app").style.display="flex";
 
-        // Mostrar tarjeta
         document.getElementById("tarjeta").innerText = cuenta.numeroTarjeta;
         document.getElementById("cvv").innerText = "CVV: " + cuenta.cvv;
 
-        cargarDatos();
+        cargarDashboard();
     })
-    .catch(() => alert("Credenciales incorrectas"));
+    .catch(()=>alert("Login incorrecto"));
 }
 
-
-// =========================
+// =====================
 // REGISTRO
-// =========================
-function registrar() {
+// =====================
+function registrar(){
 
     let nombre = document.getElementById("nombre").value;
     let dpi = document.getElementById("dpiRegistro").value;
-    let password = document.getElementById("passRegistro").value;
+    let pass = document.getElementById("passRegistro").value;
 
-    fetch(`${API_URL}/api/Cliente/registro?nombre=${nombre}&dpi=${dpi}&password=${password}`, {
-        method: "POST"
+    fetch(`${API}/api/Cliente/registro?nombre=${nombre}&dpi=${dpi}&password=${pass}`,{
+        method:"POST"
     })
-    .then(res => {
-        if (!res.ok) throw new Error();
-        return res.json();
-    })
-    .then(() => {
-        alert("Cuenta creada correctamente ✅");
-        mostrarLogin();
-    })
-    .catch(() => alert("Error al registrar"));
+    .then(()=>alert("Cuenta creada ✅"));
 }
 
-
-// =========================
-// CARGAR DATA
-// =========================
-function cargarDatos() {
+// =====================
+// DASHBOARD
+// =====================
+function cargarDashboard(){
     actualizarSaldo();
     cargarMovimientos();
 }
 
-
-// =========================
-// SALDO
-// =========================
-function actualizarSaldo() {
-
-    fetch(`${API_URL}/api/Cuenta/saldo?cuentaId=${cuentaId}`)
-    .then(res => res.json())
-    .then(data => {
-        document.getElementById("saldo").innerText = data.saldo;
+function actualizarSaldo(){
+    fetch(`${API}/api/Cuenta/saldo?cuentaId=${cuentaId}`)
+    .then(r=>r.json())
+    .then(d=>{
+        document.getElementById("saldo").innerText = formatMoney(d.saldo);
     });
 }
 
-
-// =========================
-// DEPOSITO
-// =========================
-function depositar() {
+// =====================
+// DEPÓSITO
+// =====================
+function depositar(){
 
     let monto = document.getElementById("depositoMonto").value;
 
-    fetch(`${API_URL}/api/Cuenta/deposito?cuentaId=${cuentaId}&monto=${monto}`, {
-        method: "POST"
-    })
-    .then(() => {
+    fetch(`${API}/api/Cuenta/deposito?cuentaId=${cuentaId}&monto=${monto}`,{
+        method:"POST"
+    }).then(()=>{
         alert("Depósito realizado ✅");
-        cargarDatos();
+        actualizarSaldo();
     });
 }
 
-
-// =========================
-// PAGO (SERVICIO EXTERNO)
-// =========================
-function pagar() {
-
-    let monto = document.getElementById("pagoMonto").value;
-
-    fetch(`${API_URL}/api/Banco/procesar?cuentaId=${cuentaId}&monto=${monto}&servicio=Servicio`, {
-        method: "POST"
-    })
-    .then(res => res.json())
-    .then(data => {
-        alert(data.mensaje || "Pago realizado ✅");
-        cargarDatos();
-    });
-}
-
-
-// =========================
+// =====================
 // TRANSFERENCIA
-// =========================
-function transferir() {
+// =====================
+function transferir(){
 
     let destino = document.getElementById("cuentaDestino").value;
     let monto = document.getElementById("montoTransfer").value;
 
-    fetch(`${API_URL}/api/Banco/transferir?origenId=${cuentaId}&destinoId=${destino}&monto=${monto}`, {
-        method: "POST"
-    })
-    .then(() => {
-        alert("Transferencia realizada ✅");
-        cargarDatos();
+    fetch(`${API}/api/Banco/transferir?origenId=${cuentaId}&destinoId=${destino}&monto=${monto}`,{
+        method:"POST"
+    }).then(()=>{
+        alert("Transferencia exitosa ✅");
+        actualizarSaldo();
     });
 }
 
+// =====================
+// PAGO SERVICIOS
+// =====================
+function pagar(){
 
-// =========================
+    let monto = document.getElementById("pagoMonto").value;
+    let tipo = document.getElementById("tipoServicio").value;
+
+    fetch(`${API}/api/Banco/procesar?cuentaId=${cuentaId}&monto=${monto}&servicio=${tipo}`,{
+        method:"POST"
+    }).then(()=>{
+        alert("Pago realizado ✅");
+        actualizarSaldo();
+    });
+}
+
+// =====================
 // MOVIMIENTOS
-// =========================
-function cargarMovimientos() {
+// =====================
+function cargarMovimientos(){
 
-    fetch(`${API_URL}/api/Movimiento?cuentaId=${cuentaId}`)
-    .then(res => res.json())
-    .then(data => {
+    fetch(`${API}/api/Movimiento?cuentaId=${cuentaId}`)
+    .then(r=>r.json())
+    .then(data=>{
+        let lista = document.getElementById("listaMovimientos");
+        lista.innerHTML="";
 
-        let lista = document.getElementById("movimientos");
-        lista.innerHTML = "";
-
-        data.forEach(m => {
+        data.forEach(m=>{
             let li = document.createElement("li");
-            li.innerText = `${m.tipo} - Q${m.monto}`;
+            li.innerText = `${m.tipo} - Q${formatMoney(m.monto)}`;
             lista.appendChild(li);
         });
-
     });
 }
 
-
-// =========================
+// =====================
 // LOGOUT
-// =========================
-function logout() {
+// =====================
+function logout(){
     location.reload();
 }
