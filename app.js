@@ -56,7 +56,7 @@ function setupEventListeners() {
 
 
 // ========================================
-// LOGIN (DPI)
+// LOGIN
 // ========================================
 async function handleLogin(e) {
 
@@ -74,28 +74,27 @@ async function handleLogin(e) {
         if (!res.ok) throw new Error();
 
         const cliente = await res.json();
-
         appState.cliente = cliente;
 
-        // Crear cuenta automática
+        // CREAR CUENTA
         const resCuenta = await fetch(`${API}/api/Cuenta/crear?clienteId=${cliente.id}`, {
             method: "POST"
         });
 
         const cuenta = await resCuenta.json();
-
         appState.cuentaId = cuenta.id;
 
-        enterApp();
+        enterApp(cuenta);
 
-    } catch {
+    } catch (err) {
+        console.error(err);
         showToast("Credenciales incorrectas", "error");
     }
 }
 
 
 // ========================================
-// REGISTRO COMPLETO
+// REGISTRO
 // ========================================
 async function handleRegister(e) {
 
@@ -126,30 +125,34 @@ async function handleRegister(e) {
 
 
 // ========================================
-// CAMBIO FORMULARIOS AUTH
+// SWITCH AUTH
 // ========================================
 function switchAuthForm(tipo) {
 
     document.querySelectorAll(".auth-form").forEach(f => f.classList.remove("active"));
 
-    if (tipo === "login") {
-        document.getElementById("form-login").classList.add("active");
-    } else {
-        document.getElementById("form-register").classList.add("active");
-    }
+    document.getElementById(`form-${tipo}`).classList.add("active");
 }
 
 
 // ========================================
 // ENTRAR APP
 // ========================================
-function enterApp() {
+function enterApp(cuenta) {
 
     document.getElementById("auth-container").classList.add("hidden");
     document.getElementById("main-app").classList.remove("hidden");
 
     document.getElementById("user-display-name").innerText =
         appState.cliente.nombre || "Cliente";
+
+    document.getElementById("nombre-cliente").innerText =
+        appState.cliente.nombre || "Cliente";
+
+    document.getElementById("numero-cuenta").innerText =
+        cuenta.numeroTarjeta || cuenta.numeroCuenta;
+
+    document.getElementById("cvv").innerText = cuenta.cvv;
 
     cargarDatos();
 }
@@ -169,13 +172,18 @@ function cargarDatos() {
 // ========================================
 async function actualizarSaldo() {
 
-    const res = await fetch(`${API}/api/Cuenta/saldo?cuentaId=${appState.cuentaId}`);
-    const data = await res.json();
+    try {
+        const res = await fetch(`${API}/api/Cuenta/saldo?cuentaId=${appState.cuentaId}`);
+        const data = await res.json();
 
-    appState.saldo = data.saldo;
+        appState.saldo = data.saldo;
 
-    document.getElementById("dashboard-balance").innerText =
-        "Q" + formatMoney(appState.saldo);
+        document.getElementById("dashboard-balance").innerText =
+            "Q" + formatMoney(appState.saldo);
+
+    } catch {
+        showToast("Error al cargar saldo", "error");
+    }
 }
 
 
@@ -194,13 +202,19 @@ async function handleTransfer(e) {
         return;
     }
 
-    await fetch(`${API}/api/Banco/transferir?origenId=${appState.cuentaId}&destinoId=${destino}&monto=${monto}`, {
-        method: "POST"
-    });
+    try {
 
-    showToast("Transferencia realizada ✅", "success");
+        await fetch(`${API}/api/Banco/transferir?origenId=${appState.cuentaId}&destinoId=${destino}&monto=${monto}`, {
+            method: "POST"
+        });
 
-    cargarDatos();
+        showToast("Transferencia realizada ✅", "success");
+
+        cargarDatos();
+
+    } catch {
+        showToast("Error en transferencia", "error");
+    }
 }
 
 
@@ -219,13 +233,19 @@ async function handlePago(e) {
         return;
     }
 
-    await fetch(`${API}/api/Banco/procesar?cuentaId=${appState.cuentaId}&monto=${monto}&servicio=${servicio}`, {
-        method: "POST"
-    });
+    try {
 
-    showToast("Pago realizado ✅", "success");
+        await fetch(`${API}/api/Banco/procesar?cuentaId=${appState.cuentaId}&monto=${monto}&servicio=${servicio}`, {
+            method: "POST"
+        });
 
-    cargarDatos();
+        showToast("Pago realizado ✅", "success");
+
+        cargarDatos();
+
+    } catch {
+        showToast("Error en pago", "error");
+    }
 }
 
 
@@ -234,36 +254,51 @@ async function handlePago(e) {
 // ========================================
 async function cargarMovimientos() {
 
-    const res = await fetch(`${API}/api/Movimiento?cuentaId=${appState.cuentaId}`);
-    const data = await res.json();
+    try {
 
-    const tbody = document.getElementById("transactions-log");
+        const res = await fetch(`${API}/api/Movimiento?cuentaId=${appState.cuentaId}`);
+        const data = await res.json();
 
-    tbody.innerHTML = "";
+        const tbody = document.getElementById("transactions-log");
+        tbody.innerHTML = "";
 
-    data.forEach(m => {
+        data.forEach(m => {
 
-        const tr = document.createElement("tr");
+            const tr = document.createElement("tr");
 
-        tr.innerHTML = `
-            <td>${m.tipo}</td>
-            <td>${formatFecha(m.fecha)}</td>
-            <td class="text-right">Q${formatMoney(m.monto)}</td>
-        `;
+            tr.innerHTML = `
+                <td>${m.tipo}</td>
+                <td>${formatFecha(m.fecha)}</td>
+                <td class="text-right">Q${formatMoney(m.monto)}</td>
+            `;
 
-        tbody.appendChild(tr);
-    });
+            tbody.appendChild(tr);
+        });
+
+    } catch {
+        showToast("Error al cargar movimientos", "error");
+    }
 }
 
 
 // ========================================
-// NAVEGACIÓN SPA
+// NAVEGACIÓN (FIX REAL 🔥)
 // ========================================
-function navigate(view) {
+function navigateToView(viewId) {
 
-    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+    // cambiar vistas
+    document.querySelectorAll(".app-view").forEach(v => {
+        v.classList.remove("active");
+    });
 
-    document.getElementById(view).classList.add("active");
+    document.getElementById(viewId).classList.add("active");
+
+    // resaltar menú
+    document.querySelectorAll(".menu-item").forEach(i => {
+        i.classList.remove("active");
+    });
+
+    document.querySelector(`[data-target="${viewId}"]`)?.classList.add("active");
 }
 
 
@@ -317,5 +352,7 @@ function showToast(msg, type = "normal") {
 
     c.appendChild(t);
 
-    setTimeout(() => t.remove(), 3000);
+    setTimeout(() => {
+        t.remove();
+    }, 3000);
 }

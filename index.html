@@ -1,230 +1,294 @@
 ﻿<!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURA — Banca Privada Digital</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AURA — Banca Privada Digital</title>
 
-    <!-- FUENTES -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- ICONOS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <!-- CSS -->
-    <link rel="stylesheet" href="styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
 
-<!-- TOAST -->
 <div id="toast-container" class="toast-container"></div>
 
-<!-- ================= AUTENTICACIÓN ================= -->
+<!-- ================= AUTH ================= -->
 <div id="auth-container" class="auth-container">
-    <div class="auth-card">
+<div class="auth-card">
 
-        <div class="auth-header">
-            <div class="brand-logo">AURA</div>
-            <p class="brand-subtitle">BANCA PRIVADA</p>
-        </div>
-
-        <!-- LOGIN -->
-        <form id="form-login" class="auth-form active">
-            <h2>Bienvenido de vuelta</h2>
-            <p class="form-desc">Accede con tu DPI y contraseña.</p>
-
-            <div class="input-group">
-                <label>DPI</label>
-                <div class="input-wrapper">
-                    <i class="fa-solid fa-id-card"></i>
-                    <input type="text" id="login-dpi" placeholder="1234567890101" required>
-                </div>
-            </div>
-
-            <div class="input-group">
-                <label>Contraseña</label>
-                <div class="input-wrapper">
-                    <i class="fa-solid fa-lock"></i>
-                    <input type="password" id="login-password" required>
-                </div>
-            </div>
-
-            <button class="btn btn-primary">Iniciar Sesión</button>
-
-            <p class="auth-footer">
-                ¿No tienes cuenta?
-                <a onclick="switchAuthForm('register')">Crear cuenta</a>
-            </p>
-        </form>
-
-        <!-- REGISTRO -->
-        <form id="form-register" class="auth-form">
-            <h2>Apertura de Cuenta</h2>
-
-            <!-- NOMBRE -->
-            <div class="input-group">
-                <label>Nombre Completo</label>
-                <div class="input-wrapper">
-                    <i class="fa-regular fa-user"></i>
-                    <input type="text" id="reg-name" required>
-                </div>
-            </div>
-
-            <!-- DPI -->
-            <div class="input-group">
-                <label>DPI</label>
-                <div class="input-wrapper">
-                    <i class="fa-solid fa-id-card"></i>
-                    <input type="text" id="reg-dpi" required>
-                </div>
-            </div>
-
-            <!-- CORREO -->
-            <div class="input-group">
-                <label>Correo</label>
-                <div class="input-wrapper">
-                    <i class="fa-regular fa-envelope"></i>
-                    <input type="email" id="reg-email" required>
-                </div>
-            </div>
-
-            <!-- TELÉFONO -->
-            <div class="input-group">
-                <label>Teléfono</label>
-                <div class="input-wrapper">
-                    <i class="fa-solid fa-phone"></i>
-                    <input type="text" id="reg-telefono" required>
-                </div>
-            </div>
-
-            <!-- DIRECCIÓN -->
-            <div class="input-group">
-                <label>Dirección</label>
-                <div class="input-wrapper">
-                    <i class="fa-solid fa-location-dot"></i>
-                    <input type="text" id="reg-direccion" required>
-                </div>
-            </div>
-
-            <!-- PASSWORD -->
-            <div class="input-group">
-                <label>Contraseña</label>
-                <div class="input-wrapper">
-                    <i class="fa-solid fa-lock"></i>
-                    <input type="password" id="reg-password" required>
-                </div>
-            </div>
-
-            <button class="btn btn-primary">Registrarse</button>
-
-            <p class="auth-footer">
-                Ya tienes cuenta
-                <a onclick="switchAuthForm('login')">Iniciar sesión</a>
-            </p>
-        </form>
-
-    </div>
+<div class="auth-header">
+<div class="brand-logo">AURA</div>
+<p class="brand-subtitle">BANCA PRIVADA</p>
 </div>
 
-<!-- ================= APP PRINCIPAL ================= -->
+<form id="form-login" class="auth-form active">
+<h2>Bienvenido</h2>
+
+<div class="input-group">
+<label>DPI</label>
+<div class="input-wrapper">
+<i class="fa-solid fa-id-card"></i>
+<input id="login-dpi" required>
+</div>
+</div>
+
+<div class="input-group">
+<label>Password</label>
+<div class="input-wrapper">
+<i class="fa-solid fa-lock"></i>
+<input type="password" id="login-password" required>
+</div>
+</div>
+
+<button class="btn btn-primary btn-full">Ingresar</button>
+
+<p class="auth-footer">
+<a onclick="switchAuthForm('register')">Crear cuenta</a>
+</p>
+</form>
+
+<form id="form-register" class="auth-form">
+
+<h2>Registro</h2>
+
+<div class="input-group">
+<label>Nombre</label>
+<div class="input-wrapper">
+<input id="reg-name" required>
+</div>
+</div>
+
+<div class="input-group">
+<label>DPI</label>
+<div class="input-wrapper">
+<input id="reg-dpi" required>
+</div>
+</div>
+
+<div class="input-group">
+<label>Correo</label>
+<div class="input-wrapper">
+<input id="reg-email" required>
+</div>
+</div>
+
+<div class="input-group">
+<label>Teléfono</label>
+<div class="input-wrapper">
+<input id="reg-telefono" required>
+</div>
+</div>
+
+<div class="input-group">
+<label>Dirección</label>
+<div class="input-wrapper">
+<input id="reg-direccion" required>
+</div>
+</div>
+
+<div class="input-group">
+<label>Password</label>
+<div class="input-wrapper">
+<input type="password" id="reg-password" required>
+</div>
+</div>
+
+<button class="btn btn-primary btn-full">Registrar</button>
+
+</form>
+</div>
+</div>
+
+<!-- ================= APP ================= -->
 <div id="main-app" class="app-container hidden">
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
+<!-- SIDEBAR -->
+<aside class="sidebar">
 
-        <div class="sidebar-brand">AURA</div>
+<div class="sidebar-brand">
+<span class="logo-text">AURA</span>
+</div>
 
-        <nav class="sidebar-menu">
-            <a class="menu-item active" onclick="navigate('view-dashboard')">
-                <i class="fa-solid fa-chart-pie"></i> Dashboard
-            </a>
+<nav class="sidebar-menu">
 
-            <a class="menu-item" onclick="navigate('view-payments')">
-                <i class="fa-solid fa-wallet"></i> Pagos
-            </a>
+<a class="menu-item active" data-target="view-dashboard" onclick="navigateToView('view-dashboard')">
+<i class="fa-solid fa-chart-pie"></i>
+<span>Dashboard</span>
+</a>
 
-            <a class="menu-item" onclick="navigate('view-transfers')">
-                <i class="fa-solid fa-arrow-right-arrow-left"></i> Transferencias
-            </a>
-        </nav>
+<a class="menu-item" data-target="view-payments" onclick="navigateToView('view-payments')">
+<i class="fa-solid fa-wallet"></i>
+<span>Pagos</span>
+</a>
 
-        <div class="sidebar-footer">
-            <span id="user-display-name">Usuario</span>
+<a class="menu-item" data-target="view-transfers" onclick="navigateToView('view-transfers')">
+<i class="fa-solid fa-arrow-right-arrow-left"></i>
+<span>Transferencias</span>
+</a>
 
-            <button id="btn-logout" class="btn-logout">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i> Salir
-            </button>
-        </div>
+</nav>
 
-    </aside>
+<div class="sidebar-footer">
 
-    <!-- MAIN -->
-    <main class="main-content">
+<div class="user-profile-summary">
+<div class="avatar">CP</div>
+<div class="user-info">
+<span id="user-display-name">Cliente</span>
+<span class="tier">Premium</span>
+</div>
+</div>
 
-        <header class="main-header">
-            <h1 id="greeting">Bienvenido</h1>
-        </header>
-
-        <!-- DASHBOARD -->
-        <section id="view-dashboard" class="view active">
-
-            <h2>Saldo Total</h2>
-            <h1 id="dashboard-balance">Q0.00</h1>
-
-            <h3>Movimientos</h3>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>Tipo</th>
-                        <th>Fecha</th>
-                        <th class="text-right">Monto</th>
-                    </tr>
-                </thead>
-                <tbody id="transactions-log"></tbody>
-            </table>
-
-        </section>
-
-        <!-- PAGOS -->
-        <section id="view-payments" class="view">
-
-            <h2>Pagos</h2>
-
-            <form id="form-pago">
-                <input type="number" id="pago-monto" placeholder="Monto" required>
-
-                <select id="pago-servicio">
-                    <option>Netflix</option>
-                    <option>Teléfono</option>
-                    <option>Donaciones</option>
-                </select>
-
-                <button class="btn btn-primary">Pagar</button>
-            </form>
-
-        </section>
-
-        <!-- TRANSFERENCIAS -->
-        <section id="view-transfers" class="view">
-
-            <h2>Transferencias</h2>
-
-            <form id="form-transfer">
-                <input type="text" id="transfer-account" placeholder="Cuenta destino" required>
-                <input type="number" id="transfer-amount" placeholder="Monto" required>
-
-                <button class="btn btn-primary">Transferir</button>
-            </form>
-
-        </section>
-
-    </main>
+<button id="btn-logout" class="btn-logout">
+<i class="fa-solid fa-arrow-right-from-bracket"></i>
+Salir
+</button>
 
 </div>
 
-<!-- JS -->
+</aside>
+
+<!-- MAIN -->
+<main class="main-content">
+
+<header class="main-header">
+<h1 id="greeting">Bienvenido</h1>
+</header>
+
+<!-- ================= DASHBOARD ================= -->
+<section id="view-dashboard" class="app-view active">
+
+<div class="grid-dashboard">
+
+<div class="card card-balance">
+
+<span class="card-label">Balance Total</span>
+
+<h2 class="balance-amount" id="dashboard-balance">Q0.00</h2>
+
+<div class="card-chip-row">
+<span class="account-number" id="numero-cuenta">**** ****</span>
+<i class="fa-solid fa-credit-card chip-icon"></i>
+</div>
+
+<p>CVV: <span id="cvv">000</span></p>
+<p id="nombre-cliente">Cliente</p>
+
+</div>
+
+<div class="card">
+<h3>Acciones rápidas</h3>
+
+<div class="quick-actions-grid">
+
+<button class="quick-btn" onclick="navigateToView('view-payments')">
+<i class="fa-solid fa-receipt"></i>
+<span>Pagar</span>
+</button>
+
+<button class="quick-btn" onclick="navigateToView('view-transfers')">
+<i class="fa-solid fa-paper-plane"></i>
+<span>Transferir</span>
+</button>
+
+</div>
+</div>
+
+</div>
+
+<div class="card">
+
+<h3>Movimientos</h3>
+
+<table class="premium-table">
+<thead>
+<tr>
+<th>Tipo</th>
+<th>Fecha</th>
+<th class="text-right">Monto</th>
+</tr>
+</thead>
+<tbody id="transactions-log"></tbody>
+</table>
+
+</div>
+
+</section>
+
+<!-- ================= PAGOS ================= -->
+<section id="view-payments" class="app-view">
+
+<div class="section-intro">
+<h2>Pagos</h2>
+<p>Gestión de servicios</p>
+</div>
+
+<div class="card max-w-md">
+<form id="form-pago">
+
+<div class="input-group">
+<label>Monto</label>
+<div class="input-wrapper">
+<input type="number" id="pago-monto">
+</div>
+</div>
+
+<div class="input-group">
+<label>Servicio</label>
+<div class="input-wrapper">
+<select id="pago-servicio">
+<option>Netflix</option>
+<option>Teléfono</option>
+<option>Donaciones</option>
+</select>
+</div>
+</div>
+
+<button class="btn btn-primary btn-full">Pagar</button>
+
+</form>
+</div>
+
+</section>
+
+<!-- ================= TRANSFER ================= -->
+<section id="view-transfers" class="app-view">
+
+<div class="section-intro">
+<h2>Transferencias</h2>
+</div>
+
+<div class="card max-w-md">
+
+<form id="form-transfer">
+
+<div class="input-group">
+<label>Cuenta destino</label>
+<div class="input-wrapper">
+<input id="transfer-account">
+</div>
+</div>
+
+<div class="input-group">
+<label>Monto</label>
+<div class="input-wrapper">
+<input type="number" id="transfer-amount">
+</div>
+</div>
+
+<button class="btn btn-primary btn-full">Transferir</button>
+
+</form>
+
+</div>
+
+</section>
+
+</main>
+
+</div>
+
 <script src="app.js"></script>
 
 </body>
