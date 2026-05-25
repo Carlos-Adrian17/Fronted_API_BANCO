@@ -1,85 +1,295 @@
 ﻿<!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Banco Premium</title>
-
-<link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURA — Banca Privada Digital</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
 
-<!-- ================= LOGIN ================= -->
-<div id="login-screen">
-    <div class="login-box">
-        <h1>Banco Premium</h1>
+    <div id="toast-container" class="toast-container"></div>
 
-        <input id="dpiLogin" placeholder="DPI">
-        <input id="passLogin" type="password" placeholder="Contraseña">
+    <div id="auth-container" class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="brand-logo">AURA</div>
+                <p class="brand-subtitle">BANCA PRIVADA</p>
+            </div>
 
-        <button onclick="login()">Ingresar</button>
+            <form id="form-login" class="auth-form active">
+                <h2>Bienvenido de vuelta</h2>
+                <p class="form-desc">Introduce tus credenciales para acceder a tu espacio financiero.</p>
+                
+                <div class="input-group">
+                    <label for="login-email">Correo Electrónico</label>
+                    <div class="input-wrapper">
+                        <i class="fa-regular fa-envelope"></i>
+                        <input type="email" id="login-email" placeholder="nombre@aura.com" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="login-password">Contraseña</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="login-password" placeholder="••••••••" required>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a href="#" class="link-smooth" onclick="switchAuthForm('recover')">¿Olvidaste tu contraseña?</a>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+                
+                <p class="auth-footer">¿No eres cliente? <a href="#" class="link-smooth" onclick="switchAuthForm('register')">Crea una cuenta</a></p>
+            </form>
+
+            <form id="form-register" class="auth-form">
+                <h2>Apertura de Cuenta</h2>
+                <p class="form-desc">Únete a la experiencia financiera más exclusiva.</p>
+                
+                <div class="input-group">
+                    <label for="reg-name">Nombre Completo</label>
+                    <div class="input-wrapper">
+                        <i class="fa-regular fa-user"></i>
+                        <input type="text" id="reg-name" placeholder="Juan Pérez" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="reg-email">Correo Electrónico</label>
+                    <div class="input-wrapper">
+                        <i class="fa-regular fa-envelope"></i>
+                        <input type="email" id="reg-email" placeholder="nombre@aura.com" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="reg-password">Contraseña</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="reg-password" placeholder="Mínimo 8 caracteres" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Solicitar Alta</button>
+                
+                <p class="auth-footer">¿Ya tienes cuenta? <a href="#" class="link-smooth" onclick="switchAuthForm('login')">Inicia sesión</a></p>
+            </form>
+
+            <form id="form-recover" class="auth-form">
+                <h2>Recuperar Acceso</h2>
+                <p class="form-desc">Te enviaremos las instrucciones para restablecer tu contraseña.</p>
+                
+                <div class="input-group">
+                    <label for="recover-email">Correo Electrónico</label>
+                    <div class="input-wrapper">
+                        <i class="fa-regular fa-envelope"></i>
+                        <input type="email" id="recover-email" placeholder="nombre@aura.com" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Enviar Enlace</button>
+                
+                <p class="auth-footer">Volver al <a href="#" class="link-smooth" onclick="switchAuthForm('login')">Inicio de sesión</a></p>
+            </form>
+        </div>
     </div>
-</div>
 
-<!-- ================= APP ================= -->
-<div id="app" class="app hidden">
+    <div id="main-app" class="app-container hidden">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <span class="logo-text">AURA</span>
+            </div>
+            <nav class="sidebar-menu">
+                <a href="#" class="menu-item active" data-target="view-dashboard">
+                    <i class="fa-solid fa-chart-pie"></i> Posición Global
+                </a>
+                <a href="#" class="menu-item" data-target="view-payments">
+                    <i class="fa-solid fa-wallet"></i> Pagos y Servicios
+                </a>
+                <a href="#" class="menu-item" data-target="view-transfers">
+                    <i class="fa-solid fa-arrow-right-arrow-left"></i> Transferencias
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-profile-summary">
+                    <div class="avatar">JP</div>
+                    <div class="user-info">
+                        <span id="user-display-name" class="name">Juan Pérez</span>
+                        <span class="tier">Miembro Premium</span>
+                    </div>
+                </div>
+                <button id="btn-logout" class="btn-logout">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar Sesión
+                </button>
+            </div>
+        </aside>
 
-<!-- SIDEBAR -->
-<div class="sidebar">
-    <h2>Mi Banco</h2>
+        <main class="main-content">
+            <header class="main-header">
+                <div class="header-title">
+                    <h1 id="greeting">Buenas tardes</h1>
+                    <p class="date-str" id="current-date">Lunes, 25 de Mayo</p>
+                </div>
+                <div class="header-actions">
+                    <div class="status-badge"><span class="pulse-dot"></span> API Conectada</div>
+                </div>
+            </header>
 
-    <button onclick="mostrar('dashboard')">🏠 Dashboard</button>
-    <button onclick="mostrar('transfer')">💸 Transferencias</button>
-    <button onclick="mostrar('pagos')">🧾 Pagos</button>
-    <button onclick="mostrar('movimientos')">📊 Movimientos</button>
+            <section id="view-dashboard" class="app-view active">
+                <div class="grid-dashboard">
+                    <div class="card card-balance">
+                        <span class="card-label">Balance Total Disponible</span>
+                        <h2 class="balance-amount" id="dashboard-balance">$0.00</h2>
+                        <div class="card-chip-row">
+                            <span class="account-number">**** **** **** 8842</span>
+                            <i class="fa-solid fa-sim-card chip-icon"></i>
+                        </div>
+                    </div>
 
-    <button class="logout" onclick="logout()">Salir</button>
-</div>
+                    <div class="card card-quick">
+                        <h3>Acciones Inmediatas</h3>
+                        <div class="quick-actions-grid">
+                            <button class="quick-btn" onclick="navigateToView('view-payments')">
+                                <i class="fa-solid fa-receipt"></i>
+                                text<span>Pagar</span>
+                            </button>
+                            <button class="quick-btn" onclick="navigateToView('view-transfers')">
+                                <i class="fa-solid fa-paper-plane"></i>
+                                <span>Enviar</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-<!-- MAIN -->
-<div class="main">
+                <div class="card card-transactions-layout">
+                    <h3>Movimientos Recientes</h3>
+                    <div class="table-responsive">
+                        <table class="premium-table">
+                            <thead>
+                                <tr>
+                                    <th>Concepto / Detalle</th>
+                                    <th>Categoría</th>
+                                    <th>Fecha</th>
+                                    <th class="text-right">Importe</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactions-log">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
 
-<!-- DASHBOARD -->
-<div id="dashboard" class="section">
-    <h1>Saldo Disponible</h1>
-    <h2 class="saldo">Q<span id="saldo">0.00</span></h2>
+            <section id="view-payments" class="app-view">
+                <div class="section-intro">
+                    <h2>Pagos de Servicios Premium</h2>
+                    <p>Liquida o gestiona tus suscripciones y aportaciones filantrópicas de manera segura.</p>
+                </div>
 
-    <div class="card-bank">
-        <p>Banco Premium</p>
-        <h3 id="tarjeta"></h3>
-        <p id="cvv"></p>
+                <div class="services-grid">
+                    <div class="card service-card" onclick="openPaymentModal('Netflix', 'Suscripción de Entretenimiento', 'Suscripción Mensual')">
+                        <div class="service-icon netflix"><i class="fa-solid fa-play"></i></div>
+                        <h3>Netflix</h3>
+                        <p>Planes Estándar y Premium</p>
+                        <span class="service-action-label">Pagar Servicio <i class="fa-solid fa-chevron-right"></i></span>
+                    </div>
+
+                    <div class="card service-card" onclick="openPaymentModal('Donaciones', 'Filantropía y Alianzas', 'Aportación Voluntaria')">
+                        <div class="service-icon donations"><i class="fa-solid fa-heart"></i></div>
+                        <h3>Donaciones</h3>
+                        <p>Filantropía Global</p>
+                        <span class="service-action-label">Contribuir <i class="fa-solid fa-chevron-right"></i></span>
+                    </div>
+
+                    <div class="card service-card" onclick="openPaymentModal('Teléfono', 'Telecomunicaciones', 'Pago de Factura / Recarga')">
+                        <div class="service-icon phone"><i class="fa-solid fa-mobile-screen-button"></i></div>
+                        <h3>Teléfono</h3>
+                        <p>Planes Postpago y Recargas</p>
+                        <span class="service-action-label">Gestionar Pago <i class="fa-solid fa-chevron-right"></i></span>
+                    </div>
+                </div>
+            </section>
+
+            <section id="view-transfers" class="app-view">
+                <div class="section-intro">
+                    <h2>Transferencias de Fondos</h2>
+                    <p>Envía capital de forma inmediata a cuentas Aura o terceras instituciones.</p>
+                </div>
+
+                <div class="card max-w-md">
+                    <form id="form-transfer">
+                        <div class="input-group">
+                            <label for="transfer-account">Número de Cuenta Destino</label>
+                            <div class="input-wrapper">
+                                <i class="fa-solid fa-hashtag"></i>
+                                <input type="text" id="transfer-account" placeholder="Ej. 12345678" required>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="transfer-amount">Monto a Transferir ($)</label>
+                            <div class="input-wrapper">
+                                <i class="fa-solid fa-dollar-sign"></i>
+                                <input type="number" id="transfer-amount" min="1" step="0.01" placeholder="0.00" required>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="transfer-concept">Concepto de Transferencia</label>
+                            <div class="input-wrapper">
+                                <i class="fa-regular fa-comment-dots"></i>
+                                <input type="text" id="transfer-concept" placeholder="Ej. Honorarios" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-full">Ejecutar Transferencia Ejecutiva</button>
+                    </form>
+                </div>
+            </section>
+        </main>
     </div>
-</div>
 
-<!-- TRANSFER -->
-<div id="transfer" class="section hidden">
-    <h2>Transferencia</h2>
-    <input id="cuentaDestino" placeholder="Cuenta destino">
-    <input id="montoTransfer" placeholder="Monto">
-    <button onclick="transferir()">Transferir</button>
-</div>
+    <div id="payment-modal" class="modal-backdrop">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modal-service-title">Pago de Servicio</h3>
+                <button class="close-modal" onclick="closePaymentModal()">&times;</button>
+            </div>
+            <form id="form-modal-payment">
+                <p id="modal-service-desc" class="modal-desc">Detalle del servicio seleccionado.</p>
+                
+                <div class="input-group">
+                    <label id="modal-dynamic-label" for="modal-service-reference">Referencia / Identificador</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-fingerprint"></i>
+                        <input type="text" id="modal-service-reference" placeholder="Introduce el dato requerido" required>
+                    </div>
+                </div>
 
-<!-- PAGOS -->
-<div id="pagos" class="section hidden">
-    <h2>Pagos</h2>
-    <input id="pagoMonto" placeholder="Monto">
-    <select id="tipoServicio">
-        <option>Netflix</option>
-        <option>Teléfono</option>
-        <option>Donaciones</option>
-    </select>
-    <button onclick="pagar()">Pagar</button>
-</div>
+                <div class="input-group">
+                    <label for="modal-service-amount">Monto a Liquidar ($)</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-dollar-sign"></i>
+                        <input type="number" id="modal-service-amount" min="0.1" step="0.01" placeholder="0.00" required>
+                    </div>
+                </div>
 
-<!-- MOVIMIENTOS -->
-<div id="movimientos" class="section hidden">
-    <h2>Historial</h2>
-    <ul id="listaMovimientos"></ul>
-</div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="closePaymentModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Confirmar Transacción</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-</div>
-</div>
-
-<script src="app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
