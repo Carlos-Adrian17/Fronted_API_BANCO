@@ -62,6 +62,7 @@
         <form id="form-register" class="auth-form">
             <h2>Apertura de Cuenta</h2>
 
+            <!-- NOMBRE -->
             <div class="input-group">
                 <label>Nombre Completo</label>
                 <div class="input-wrapper">
@@ -70,6 +71,7 @@
                 </div>
             </div>
 
+            <!-- DPI -->
             <div class="input-group">
                 <label>DPI</label>
                 <div class="input-wrapper">
@@ -78,6 +80,7 @@
                 </div>
             </div>
 
+            <!-- CORREO -->
             <div class="input-group">
                 <label>Correo</label>
                 <div class="input-wrapper">
@@ -86,6 +89,25 @@
                 </div>
             </div>
 
+            <!-- TELÉFONO -->
+            <div class="input-group">
+                <label>Teléfono</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-phone"></i>
+                    <input type="text" id="reg-telefono" required>
+                </div>
+            </div>
+
+            <!-- DIRECCIÓN -->
+            <div class="input-group">
+                <label>Dirección</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <input type="text" id="reg-direccion" required>
+                </div>
+            </div>
+
+            <!-- PASSWORD -->
             <div class="input-group">
                 <label>Contraseña</label>
                 <div class="input-wrapper">
@@ -105,7 +127,7 @@
     </div>
 </div>
 
-<!-- ================= APLICACIÓN ================= -->
+<!-- ================= APP PRINCIPAL ================= -->
 <div id="main-app" class="app-container hidden">
 
     <!-- SIDEBAR -->
@@ -137,7 +159,7 @@
 
     </aside>
 
-    <!-- CONTENIDO -->
+    <!-- MAIN -->
     <main class="main-content">
 
         <header class="main-header">
@@ -157,7 +179,7 @@
                     <tr>
                         <th>Tipo</th>
                         <th>Fecha</th>
-                        <th>Monto</th>
+                        <th class="text-right">Monto</th>
                     </tr>
                 </thead>
                 <tbody id="transactions-log"></tbody>
@@ -171,7 +193,7 @@
             <h2>Pagos</h2>
 
             <form id="form-pago">
-                <input type="number" id="pago-monto" placeholder="Monto">
+                <input type="number" id="pago-monto" placeholder="Monto" required>
 
                 <select id="pago-servicio">
                     <option>Netflix</option>
@@ -179,7 +201,7 @@
                     <option>Donaciones</option>
                 </select>
 
-                <button>Pagar</button>
+                <button class="btn btn-primary">Pagar</button>
             </form>
 
         </section>
@@ -190,14 +212,16 @@
             <h2>Transferencias</h2>
 
             <form id="form-transfer">
-                <input type="text" id="transfer-account" placeholder="Cuenta destino">
-                <input type="number" id="transfer-amount" placeholder="Monto">
-                <button>Transferir</button>
+                <input type="text" id="transfer-account" placeholder="Cuenta destino" required>
+                <input type="number" id="transfer-amount" placeholder="Monto" required>
+
+                <button class="btn btn-primary">Transferir</button>
             </form>
 
         </section>
 
     </main>
+
 </div>
 
 <!-- JS -->
