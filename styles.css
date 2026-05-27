@@ -401,10 +401,15 @@ body {
 .toast.success { border-left-color: var(--accent-emerald); }
 .toast.error { border-left-color: var(--accent-crimson); }
 
+/* Clases específicas para estados de la API externa */
+.txt-aprobado { color: var(--accent-emerald); font-weight: bold; }
+.txt-rechazado { color: var(--accent-crimson); font-weight: bold; }
+.sub-pay-tile:hover { border-color: var(--accent-gold) !important; }
+
 /* ANIMACIONES */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-@animation pulse-glow { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+@keyframes pulse-glow { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
 @keyframes slideInLeft { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
 /* RESPONSIVE DESIGN */
@@ -414,16 +419,4 @@ body {
     .logo-text, .user-info, .sidebar-menu span, .btn-logout span, .sidebar-brand { display: none; }
     .menu-item { justify-content: center; padding: 1.1rem; }
     .main-content { margin-left: 90px; padding: 2.5rem; }
-}
-
-/* NETFLIX MÁS VISIBLE */
-.netflix-strong {
-    color: #ff1a1a;
-    font-size: 28px;
-    text-shadow: 0 0 12px rgba(255,0,0,0.8);
-}
-
-/* ICONO GRANDE */
-.netflix-big {
-    color: #ff1a1a;
 }

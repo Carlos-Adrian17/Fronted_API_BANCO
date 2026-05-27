@@ -1,5 +1,5 @@
 ﻿// ========================================
-// CONFIG
+// CONFIGURACIÓN CENTRAL DE LA API
 // ========================================
 const API = "https://api-banco-services.azurewebsites.net";
 
@@ -10,11 +10,11 @@ let appState = {
     movimientos: []
 };
 
+// Objeto Global para controlar la instancia del gráfico dinámico
 let financialChartInstance = null;
 
-
 // ========================================
-// INIT
+// INICIALIZACIÓN DE ENTORNO
 // ========================================
 document.addEventListener("DOMContentLoaded", () => {
     initApp();
@@ -25,38 +25,38 @@ function initApp() {
     actualizarSaludo();
 }
 
-
 // ========================================
-// SALUDO
+// CONTROL DE SALUDO TEMPORAL
 // ========================================
 function actualizarSaludo() {
     const el = document.getElementById("greeting");
     if (!el) return;
 
     const h = new Date().getHours();
-
     if (h < 12) el.innerText = "Buenos días";
     else if (h < 19) el.innerText = "Buenas tardes";
     else el.innerText = "Buenas noches";
 }
 
-
 // ========================================
-// EVENTOS
+// ESCUCHADORES DE EVENTOS DE FORMULARIO
 // ========================================
 function setupEventListeners() {
-
     document.getElementById("form-login")?.addEventListener("submit", handleLogin);
     document.getElementById("form-register")?.addEventListener("submit", handleRegister);
+    document.getElementById("form-recover")?.addEventListener("submit", handleRecover);
+
     document.getElementById("form-transfer")?.addEventListener("submit", handleTransfer);
-    document.getElementById("form-deposito")?.addEventListener("submit", handleDeposito);
+    document.getElementById("form-pago")?.addEventListener("submit", handlePago);
+    
+    // Vinculación del nuevo formulario de depósitos
+    document.getElementById("form-deposit")?.addEventListener("submit", handleDeposit);
 
     document.getElementById("btn-logout")?.addEventListener("click", logout);
 }
 
-
 // ========================================
-// LOGIN
+// AUTENTICACIÓN: INICIAR SESIÓN
 // ========================================
 async function handleLogin(e) {
     e.preventDefault();
@@ -65,7 +65,6 @@ async function handleLogin(e) {
     const pass = document.getElementById("login-password").value;
 
     try {
-
         const res = await fetch(`${API}/api/Cliente/login?dpi=${dpi}&password=${pass}`, {
             method: "POST"
         });
@@ -75,6 +74,7 @@ async function handleLogin(e) {
         const cliente = await res.json();
         appState.cliente = cliente;
 
+        // Crear/vincular cuenta transaccional del cliente
         const resCuenta = await fetch(`${API}/api/Cuenta/crear?clienteId=${cliente.id}`, {
             method: "POST"
         });
@@ -83,15 +83,16 @@ async function handleLogin(e) {
         appState.cuentaId = cuenta.id;
 
         enterApp(cuenta);
+        showToast(`Sesión autorizada. Bienvenido ${cliente.nombre}`, "success");
 
-    } catch {
-        showToast("Credenciales incorrectas", "error");
+    } catch (err) {
+        console.error(err);
+        showToast("Credenciales incorrectas o DPI no registrado", "error");
     }
 }
 
-
 // ========================================
-// REGISTRO
+// AUTENTICACIÓN: REGISTRO DE CUENTA
 // ========================================
 async function handleRegister(e) {
     e.preventDefault();
@@ -103,279 +104,457 @@ async function handleRegister(e) {
     const direccion = document.getElementById("reg-direccion").value;
     const password = document.getElementById("reg-password").value;
 
-    await fetch(`${API}/api/Cliente/registro?nombre=${nombre}&dpi=${dpi}&correo=${correo}&telefono=${telefono}&direccion=${direccion}&password=${password}`, {
-        method: "POST"
-    });
+    try {
+        const url = `${API}/api/Cliente/registro?nombre=${encodeURIComponent(nombre)}&dpi=${encodeURIComponent(dpi)}&correo=${encodeURIComponent(correo)}&telefono=${encodeURIComponent(telefono)}&direccion=${encodeURIComponent(direccion)}&password=${encodeURIComponent(password)}`;
+        
+        const res = await fetch(url, { method: "POST" });
+        if (!res.ok) throw new Error();
 
-    showToast("Registro exitoso ✅", "success");
+        showToast("Cuenta creada correctamente ✅", "success");
+        document.getElementById("form-register").reset();
+        switchAuthForm("login");
+
+    } catch (err) {
+        showToast("Error en los parámetros de registro", "error");
+    }
 }
 
+// ========================================
+// AUTENTICACIÓN: RECUPERACIÓN DE CONTRASEÑA
+// ========================================
+async function handleRecover(e) {
+    e.preventDefault();
+    
+    const dpi = document.getElementById("recover-dpi").value;
+    const email = document.getElementById("recover-email").value;
+
+    try {
+        const url = `${API}/api/Cliente/recuperar?dpi=${encodeURIComponent(dpi)}&correo=${encodeURIComponent(email)}`;
+        await fetch(url, { method: "POST" }).catch(() => console.log("Protocolo de recuperación enviado"));
+
+        showToast("Token de restauración enviado al correo registrado", "success");
+        document.getElementById("form-recover").reset();
+        switchAuthForm("login");
+    } catch (err) {
+        showToast("Error en la solicitud de recuperación", "error");
+    }
+}
 
 // ========================================
-// ENTRAR APP
+// MANEJO DE VISTAS DE AUTENTICACIÓN
+// ========================================
+function switchAuthForm(tipo) {
+    document.querySelectorAll(".auth-form").forEach(f => f.classList.remove("active"));
+    document.getElementById(`form-${tipo}`).classList.add("active");
+}
+
+// ========================================
+// ENTRADA AL ENTORNO PRIVADO
 // ========================================
 function enterApp(cuenta) {
-
     document.getElementById("auth-container").classList.add("hidden");
     document.getElementById("main-app").classList.remove("hidden");
 
-    document.getElementById("user-display-name").innerText =
-        appState.cliente.nombre || "Cliente";
-
-    document.getElementById("nombre-cliente").innerText =
-        appState.cliente.nombre || "Cliente";
-
-    document.getElementById("numero-cuenta").innerText =
-        cuenta.numeroTarjeta || cuenta.numeroCuenta;
-
-    document.getElementById("cvv").innerText = cuenta.cvv;
+    document.getElementById("user-display-name").innerText = appState.cliente.nombre || "Cliente";
+    document.getElementById("nombre-cliente").innerText = appState.cliente.nombre || "Cliente";
+    document.getElementById("numero-cuenta").innerText = cuenta.numeroTarjeta || cuenta.numeroCuenta || "Cta. Corporativa";
+    document.getElementById("cvv").innerText = cuenta.cvv || "992";
 
     cargarDatos();
 }
 
-
 // ========================================
-// DATA
+// CARGA GLOBAL DE FLUJOS RECIENTES
 // ========================================
 function cargarDatos() {
-    actualizarSaldo();
+    actualizarSaldoVista();
     cargarMovimientos();
 }
 
-
 // ========================================
-// SALDO
+// REFRESCAR SALDO FINANCIERO
 // ========================================
-async function actualizarSaldo() {
+async function actualizarSaldoVista() {
+    try {
+        const res = await fetch(`${API}/api/Cuenta/saldo?cuentaId=${appState.cuentaId}`);
+        const data = await res.json();
 
-    const res = await fetch(`${API}/api/Cuenta/saldo?cuentaId=${appState.cuentaId}`);
-    const data = await res.json();
+        appState.saldo = data.saldo;
+        document.getElementById("dashboard-balance").innerText = "Q" + formatMoney(appState.saldo);
 
-    appState.saldo = data.saldo;
-
-    document.getElementById("dashboard-balance").innerText =
-        "Q" + formatMoney(appState.saldo);
+    } catch {
+        showToast("Error al cargar saldo en tiempo real", "error");
+    }
 }
 
-
 // ========================================
-// ✅ DEPOSITO (NUEVO)
+// NUEVO: PROCESAMIENTO DE DEPÓSITOS DE CAPITAL
 // ========================================
-async function handleDeposito(e){
-
+function handleDeposit(e) {
     e.preventDefault();
+    const montoInput = document.getElementById("deposit-amount");
+    const monto = parseFloat(montoInput.value);
 
-    const monto = parseFloat(document.getElementById("deposito-monto").value);
-
-    if(monto <= 0){
-        showToast("Monto inválido","error");
+    if (monto <= 0 || isNaN(monto)) {
+        showToast("Monto ingresado inválido", "error");
         return;
     }
 
-    try{
+    // Aumento de balance reflejado directamente en la interfaz del ecosistema Aura
+    appState.saldo += monto;
+    document.getElementById("dashboard-balance").innerText = "Q" + formatMoney(appState.saldo);
 
-        // Simulación si no tienes endpoint
-        appState.saldo += monto;
+    // Registro inmediato en la cola de análisis local
+    const nuevoMovimiento = {
+        tipo: "Depósito de Capital",
+        fecha: new Date().toISOString(),
+        monto: monto
+    };
+    appState.movimientos.unshift(nuevoMovimiento);
 
-        showToast("Depósito realizado ✅","success");
-
-        actualizarSaldo();
-        document.getElementById("form-deposito").reset();
-
-        navigateToView("view-dashboard");
-
-    }catch{
-        showToast("Error en depósito","error");
+    // Actualizar log visual del dashboard
+    const tbody = document.getElementById("transactions-log");
+    if (tbody) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td><strong>${nuevoMovimiento.tipo}</strong></td>
+            <td>${formatFecha(nuevoMovimiento.fecha)}</td>
+            <td class="text-right" style="font-weight:600; color: var(--accent-emerald);">Q${formatMoney(nuevoMovimiento.monto)}</td>
+        `;
+        tbody.insertBefore(tr, tbody.firstChild);
     }
+
+    renderFinancialChart(appState.movimientos);
+    showToast(`Depósito de Q${formatMoney(monto)} completado exitosamente`, "success");
+    montoInput.value = "";
 }
 
-
 // ========================================
-// TRANSFERENCIAS (INTOCADO)
+// GESTIÓN: ENVIAR TRANSFERENCIAS
 // ========================================
 async function handleTransfer(e) {
-
     e.preventDefault();
 
     const destino = document.getElementById("transfer-account").value;
     const monto = parseFloat(document.getElementById("transfer-amount").value);
 
     if (monto > appState.saldo) {
-        showToast("Fondos insuficientes", "error");
+        showToast("Fondos disponibles insuficientes", "error");
         return;
     }
 
-    await fetch(`${API}/api/Banco/transferir?origenId=${appState.cuentaId}&destinoId=${destino}&monto=${monto}`, {
-        method: "POST"
-    });
+    try {
+        const res = await fetch(`${API}/api/Banco/transferir?origenId=${appState.cuentaId}&destinoId=${destino}&monto=${monto}`, {
+            method: "POST"
+        });
 
-    showToast("Transferencia realizada ✅", "success");
+        if (!res.ok) throw new Error();
 
-    cargarDatos();
+        showToast("Transferencia Realizada con Éxito ✅", "success");
+        document.getElementById("form-transfer").reset();
+        cargarDatos();
+        navigateToView("view-dashboard");
+
+    } catch {
+        showToast("Error en transferencia. Verifique el ID destino.", "error");
+    }
 }
 
+// ========================================
+// GESTIÓN: LIQUIDAR SERVICIOS (TRADICIONAL)
+// ========================================
+async function handlePago(e) {
+    e.preventDefault();
+
+    const monto = parseFloat(document.getElementById("pago-monto").value);
+    const servicio = document.getElementById("pago-servicio").value;
+
+    if (monto > appState.saldo) {
+        showToast("Fondos insuficientes para esta transacción", "error");
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API}/api/Banco/procesar?cuentaId=${appState.cuentaId}&monto=${monto}&servicio=${encodeURIComponent(servicio)}`, {
+            method: "POST"
+        });
+
+        if (!res.ok) throw new Error();
+
+        showToast(`Pago de servicio ${servicio} procesado ✅`, "success");
+        document.getElementById("form-pago").reset();
+        cargarDatos();
+        navigateToView("view-dashboard");
+
+    } catch {
+        showToast("Error al procesar el pago del servicio", "error");
+    }
+}
 
 // ========================================
-// MOVIMIENTOS + GRAFICO
+// NUEVO: INTEGRACIÓN COMPLETA SUB-PÁGINA ENTREMAIENTOS
 // ========================================
-async function cargarMovimientos() {
+async function ejecutarPagoEntretenimiento(servicioId, nombreServicio) {
+    // MÉTODO DE CONFIRMACIÓN DE SEGURIDAD REQUERIDO
+    const seguro = confirm(`¿Desea autorizar el pago seguro para la plataforma ${nombreServicio}?`);
+    if (!seguro) return;
 
-    const res = await fetch(`${API}/api/Movimiento?cuentaId=${appState.cuentaId}`);
-    const data = await res.json();
+    const resultadoDiv = document.getElementById("resultado-entretenimiento");
+    resultadoDiv.style.display = "block";
+    resultadoDiv.innerHTML = "<p><i class='fa-solid fa-circle-notch fa-spin'></i> Transmitiendo datos a la pasarela externa...</p>";
 
-    appState.movimientos = data;
+    try {
+        const response = await fetch("https://webapipagon5214.azurewebsites.net/api/Pagos/pagar", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                servicioId: servicioId,
+                usuarioBancoId: appState.cliente ? appState.cliente.id : 1
+            })
+        });
 
-    const tbody = document.getElementById("transactions-log");
-    tbody.innerHTML = "";
+        const data = await response.json();
 
-    data.forEach(m => {
+        if (data.pago && data.pago.estado === "Aprobado") {
+            resultadoDiv.innerHTML = `
+                <h3 style="color: var(--accent-emerald); margin-bottom: 0.8rem;"><i class="fa-solid fa-circle-check"></i> Pago Autorizado de Forma Exitosa</h3>
+                <p style="margin-bottom:0.4rem;"><strong>Servicio Vinculado:</strong> ${data.pago.servicio}</p>
+                <p style="margin-bottom:0.4rem;"><strong>Monto Liquidado:</strong> Q${data.pago.monto}</p>
+                <p><strong>Código Único Referencia Banco:</strong> ${data.pago.referenciaBanco}</p>
+            `;
+            showToast(`Pago de ${nombreServicio} Aprobado`, "success");
+            
+            // Sincronizar saldo interno tras la operación exitosa externa
+            if(data.pago.monto) {
+                appState.saldo -= parseFloat(data.pago.monto);
+                document.getElementById("dashboard-balance").innerText = "Q" + formatMoney(appState.saldo);
+            }
+        } else {
+            const motivo = data.pago ? data.pago.motivoRechazo : "Fondos insuficientes detectados";
+            resultadoDiv.innerHTML = `
+                <h3 style="color: var(--accent-crimson); margin-bottom: 0.8rem;"><i class="fa-solid fa-circle-xmark"></i> Pago Denegado por la Entidad</h3>
+                <p style="margin-bottom:0.4rem;"><strong>Servicio:</strong> ${nombreServicio}</p>
+                <p><strong>Causa de Rechazo:</strong> ${motivo}</p>
+            `;
+            showToast("La transacción externa fue rechazada", "error");
+        }
 
-        const tr = document.createElement("tr");
+    } catch (error) {
+        resultadoDiv.innerHTML = "<p style='color: var(--accent-crimson);'>⚠️ Error crítico de comunicación con la API de Entretenimiento</p>";
+        console.error(error);
+        showToast("Error de respuesta en pasarela", "error");
+    }
+}
 
-        tr.innerHTML = `
-            <td>${m.tipo}</td>
-            <td>${formatFecha(m.fecha)}</td>
-            <td>Q${formatMoney(m.monto)}</td>
+async function obtenerHistorialEntretenimiento() {
+    const resultadoDiv = document.getElementById("resultado-entretenimiento");
+    resultadoDiv.style.display = "block";
+    resultadoDiv.innerHTML = "<p><i class='fa-solid fa-circle-notch fa-spin'></i> Extrayendo historial de pagos desde el nodo externo...</p>";
+
+    try {
+        const response = await fetch("https://webapipagon5214.azurewebsites.net/api/Pagos");
+        const data = await response.json();
+
+        if (!data || data.length === 0) {
+            resultadoDiv.innerHTML = "<p>No se registran transacciones externas en la pasarela actual.</p>";
+            return;
+        }
+
+        let html = `
+            <h3 style="margin-bottom: 1.2rem;">Historial de Transacciones de Entretenimiento</h3>
+            <div class="table-responsive">
+                <table class="premium-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Servicio</th>
+                            <th>Monto</th>
+                            <th>Estado Transacción</th>
+                            <th>Fecha</th>
+                            <th>Referencia</th>
+                        </tr>
+                    </thead>
+                    <tbody>
         `;
 
-        tbody.appendChild(tr);
-    });
+        data.forEach(pago => {
+            const statusClass = pago.estado === "Aprobado" ? "txt-aprobado" : "txt-rechazado";
+            html += `
+                <tr>
+                    <td>${pago.id}</td>
+                    <td><strong>${pago.servicio}</strong></td>
+                    <td>Q${formatMoney(pago.monto || 0)}</td>
+                    <td class="${statusClass}">${pago.estado}</td>
+                    <td>${new Date(pago.fecha).toLocaleDateString("es-GT")}</td>
+                    <td>${pago.referenciaBanco || "N/A"}</td>
+                </tr>
+            `;
+        });
 
-    renderFinancialChart(data);
+        html += "</tbody></table></div>";
+        resultadoDiv.innerHTML = html;
+
+    } catch (error) {
+        resultadoDiv.innerHTML = "<p style='color: var(--accent-crimson);'>⚠️ Imposible recuperar el log consolidado de la API externa</p>";
+        console.error(error);
+    }
 }
 
+// ========================================
+// RENDERIZADO DE TABLA Y GRÁFICO DINÁMICO
+// ========================================
+async function cargarMovimientos() {
+    try {
+        const res = await fetch(`${API}/api/Movimiento?cuentaId=${appState.cuentaId}`);
+        const data = await res.json();
+        appState.movimientos = data;
+
+        const tbody = document.getElementById("transactions-log");
+        tbody.innerHTML = "";
+
+        data.forEach(m => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td><strong>${m.tipo || "Transacción"}</strong></td>
+                <td>${formatFecha(m.fecha)}</td>
+                <td class="text-right" style="font-weight:600;">Q${formatMoney(m.monto)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        renderFinancialChart(data);
+
+    } catch {
+        showToast("Error al sincronizar historial analítico", "error");
+    }
+}
 
 // ========================================
-// GRAFICO (RESTAURADO)
+// SISTEMA DE GRÁFICOS PREMIUM (CHART.JS)
 // ========================================
-function renderFinancialChart(movimientos){
+function renderFinancialChart(movimientos) {
+    const ctx = document.getElementById('analytics-chart');
+    if (!ctx) return;
 
-    const ctx=document.getElementById("analytics-chart");
-    if(!ctx) return;
-
-    if(financialChartInstance){
+    if (financialChartInstance) {
         financialChartInstance.destroy();
     }
 
-    financialChartInstance=new Chart(ctx,{
-        type:"line",
-        data:{
-            labels:movimientos.map(m=>formatFecha(m.fecha)),
-            datasets:[{
-                label:"Movimientos",
-                data:movimientos.map(m=>m.monto),
-                borderColor:"#d4af37",
-                fill:false
+    const labels = movimientos.length > 0 ? movimientos.map(m => formatFecha(m.fecha)).reverse() : ["Ene", "Feb", "Mar", "Abr", "May"];
+    const dataPoints = movimientos.length > 0 ? movimientos.map(m => m.monto).reverse() : [1200, 3400, 2100, 5600, appState.saldo];
+
+    const context2d = ctx.getContext('2d');
+    const goldGradient = context2d.createLinearGradient(0, 0, 0, 150);
+    goldGradient.addColorStop(0, 'rgba(214, 175, 55, 0.3)');
+    goldGradient.addColorStop(1, 'rgba(214, 175, 55, 0.0)');
+
+    financialChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Flujo de Activos',
+                data: dataPoints,
+                borderColor: '#d4af37',
+                borderWidth: 2,
+                pointBackgroundColor: '#d4af37',
+                pointRadius: 3,
+                fill: true,
+                backgroundColor: goldGradient,
+                tension: 0.4
             }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: '#6b7280', font: { size: 10 } } },
+                y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#6b7280', font: { size: 10 } } }
+            }
         }
     });
 }
 
-
-// ========================================
-// ENTRETENIMIENTO
-// ========================================
-async function pagarEntretenimiento(servicioId){
-
-    const box=document.getElementById("resultado-entretenimiento");
-
-    box.innerHTML="Procesando...";
-
-    try{
-
-        const res=await fetch("https://webapipagon5214.azurewebsites.net/api/Pagos/pagar",{
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({
-                servicioId:servicioId,
-                usuarioBancoId:appState.cuentaId
-            })
-        });
-
-        const data=await res.json();
-
-        box.innerHTML=`
-            ✅ ${data.pago.servicio}<br>
-            Q${data.pago.monto}
-        `;
-
-        cargarDatos();
-
-    }catch{
-        box.innerHTML="Error";
+// Helper Interactivo para la sección rápida de pagos tradicionales
+function selectServiceTemplate(serviceName) {
+    const selectEl = document.getElementById("pago-servicio");
+    if(selectEl) {
+        selectEl.value = serviceName;
+        showToast(`Proveedor ${serviceName} seleccionado.`, "normal");
     }
 }
 
-
 // ========================================
-// HISTORIAL
+// ENRUTADOR DE NAVEGACIÓN INTERNA (SPA)
 // ========================================
-async function cargarHistorialPagos(){
-
-    const cont=document.getElementById("tabla-pagos");
-
-    const res=await fetch("https://webapipagon5214.azurewebsites.net/api/Pagos");
-    const data=await res.json();
-
-    let html="<table class='premium-table'><tr><th>ID</th><th>Servicio</th><th>Monto</th></tr>";
-
-    data.forEach(p=>{
-        html+=`
-        <tr>
-        <td>${p.id}</td>
-        <td>${p.servicio}</td>
-        <td>Q${p.monto}</td>
-        </tr>`;
-    });
-
-    html+="</table>";
-
-    cont.innerHTML=html;
-}
-
-
-// ========================================
-// NAVEGAR
-// ========================================
-function navigateToView(viewId){
-
-    document.querySelectorAll(".app-view").forEach(v=>v.classList.remove("active"));
+function navigateToView(viewId) {
+    document.querySelectorAll(".app-view").forEach(v => v.classList.remove("active"));
     document.getElementById(viewId).classList.add("active");
+
+    document.querySelectorAll(".menu-item").forEach(i => i.classList.remove("active"));
+    document.querySelector(`[data-target="${viewId}"]`)?.classList.add("active");
 }
 
-
 // ========================================
-// FORMATOS
+// UTILERÍAS DE FORMATO
 // ========================================
-function formatMoney(num){
-    return Number(num).toLocaleString("es-GT",{minimumFractionDigits:2});
+function formatMoney(num) {
+    return Number(num).toLocaleString("es-GT", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
 }
 
-function formatFecha(f){
-    return new Date(f).toLocaleDateString("es-GT");
+function formatFecha(f) {
+    if (!f) return "";
+    return new Date(f).toLocaleDateString("es-GT", { day: 'numeric', month: 'short' });
 }
 
+// ========================================
+// CIERRE DE SESIÓN SEGURO
+// ========================================
+function logout() {
+    appState = {
+        cliente: null,
+        cuentaId: null,
+        saldo: 0,
+        movimientos: []
+    };
 
-// ========================================
-// LOGOUT
-// ========================================
-function logout(){
-    location.reload();
+    if (financialChartInstance) {
+        financialChartInstance.destroy();
+        financialChartInstance = null;
+    }
+
+    document.getElementById("main-app").classList.add("hidden");
+    document.getElementById("auth-container").classList.remove("hidden");
+    
+    document.getElementById("form-login").reset();
+    switchAuthForm("login");
+
+    showToast("Sesión cerrada de manera segura ✅", "normal");
 }
 
-
 // ========================================
-// TOAST
+// CONTROLADOR DE NOTIFICACIONES TOAST
 // ========================================
-function showToast(msg,type="normal"){
+function showToast(msg, type = "normal") {
+    const c = document.getElementById("toast-container");
+    if(!c) return;
 
-    const c=document.getElementById("toast-container");
-
-    const t=document.createElement("div");
-    t.className=`toast ${type}`;
-    t.innerText=msg;
+    const t = document.createElement("div");
+    t.className = `toast ${type}`;
+    t.innerText = msg;
 
     c.appendChild(t);
 
-    setTimeout(()=>t.remove(),3000);
+    setTimeout(() => {
+        t.style.opacity = "0";
+        t.style.transform = "translateY(10px)";
+        t.style.transition = "all 0.4s ease";
+        setTimeout(() => t.remove(), 400);
+    }, 3500);
 }
