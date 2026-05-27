@@ -243,85 +243,70 @@
             </section>
 
             <section id="view-payments" class="app-view">
-                <div class="section-intro">
-                    <h2>Liquidación Masiva de Servicios</h2>
-                    <p>Gestiona y paga tus servicios corporativos y suscripciones con cargo inmediato.</p>
-                </div>
+                
+                <div id="payments-categories-view">
+                    <div class="section-intro">
+                        <h2>Liquidación Masiva de Servicios</h2>
+                        <p>Selecciona una categoría libre para gestionar tus pagos y suscripciones bancarias.</p>
+                    </div>
 
-                <div class="services-interactive-grid">
-                    <div class="card service-tile" onclick="selectServiceTemplate('Netflix')">
-                        <i class="fa-solid fa-play service-icon-premium netflix"></i>
-                        <h4>Netflix Entertainment</h4>
-                        <p>Facturas de Suscripción</p>
-                    </div>
-                    <div class="card service-tile" onclick="selectServiceTemplate('Teléfono')">
-                        <i class="fa-solid fa-mobile-screen service-icon-premium phone"></i>
-                        <h4>Telefonía & Datos Celulares</h4>
-                        <p>Planes Postpago Nacionales</p>
-                    </div>
-                    <div class="card service-tile" onclick="selectServiceTemplate('Donaciones')">
-                        <i class="fa-solid fa-heart-pulse service-icon-premium donations"></i>
-                        <h4>Donaciones Filantrópicas</h4>
-                        <p>Aportaciones de Impacto Global</p>
-                    </div>
-                </div>
-
-                <div class="card max-w-md" style="margin-top: 2rem;">
-                    <form id="form-pago">
-                        <div class="input-group">
-                            <label>Monto a Liquidar (Q)</label>
-                            <div class="input-wrapper">
-                                <i class="fa-solid fa-money-bill-wave"></i>
-                                <input type="number" step="0.01" id="pago-monto" placeholder="0.00" required>
-                            </div>
+                    <div class="services-interactive-grid">
+                        <div class="card service-tile" onclick="openEntertainmentSubPage()">
+                            <i class="fa-solid fa-film service-icon-premium netflix"></i>
+                            <h4>Servicios de Entretenimiento</h4>
+                            <p>Suscripciones de Streaming y Contenido Digital</p>
                         </div>
-
-                        <div class="input-group">
-                            <label>Proveedor de Servicio Seleccionado</label>
-                            <div class="input-wrapper">
-                                <i class="fa-solid fa-layer-group"></i>
-                                <select id="pago-servicio" required>
-                                    <option value="Netflix">Netflix</option>
-                                    <option value="Teléfono">Teléfono</option>
-                                    <option value="Donaciones">Donaciones</option>
-                                </select>
-                            </div>
+                        <div class="card service-tile" onclick="showToast('Módulo de telefonía en mantenimiento estratégico', 'normal')">
+                            <i class="fa-solid fa-mobile-screen service-icon-premium phone"></i>
+                            <h4>Telefonía & Datos Celulares</h4>
+                            <p>Planes Postpago Nacionales</p>
                         </div>
-
-                        <button type="submit" class="btn btn-primary btn-full">Autorizar Pago Electrónico</button>
-                    </form>
-                </div>
-
-                <div class="section-intro" style="margin-top: 4rem;">
-                    <h2>Pasarela de Servicios de Entretenimiento (API Externa)</h2>
-                    <p>Liquidación directa mediante la pasarela en la nube con confirmación de seguridad.</p>
-                </div>
-
-                <div class="services-interactive-grid">
-                    <div class="card service-tile sub-pay-tile" onclick="ejecutarPagoEntretenimiento(1, 'Netflix')">
-                        <i class="fa-solid fa-circle-play service-icon-premium" style="background-color: rgba(229,9,20,0.15); color: #e50914;"></i>
-                        <h4>Pagar Netflix</h4>
-                        <p>ID Servicio: 1</p>
-                    </div>
-                    <div class="card service-tile sub-pay-tile" onclick="ejecutarPagoEntretenimiento(2, 'HBO')">
-                        <i class="fa-solid fa-clapperboard service-icon-premium" style="background-color: rgba(128,0,128,0.15); color: #a855f7;"></i>
-                        <h4>Pagar HBO</h4>
-                        <p>ID Servicio: 2</p>
-                    </div>
-                    <div class="card service-tile sub-pay-tile" onclick="ejecutarPagoEntretenimiento(3, 'Paramount')">
-                        <i class="fa-solid fa-video service-icon-premium" style="background-color: rgba(0,123,255,0.15); color: #007BFF;"></i>
-                        <h4>Pagar Paramount</h4>
-                        <p>ID Servicio: 3</p>
+                        <div class="card service-tile" onclick="showToast('Módulo de aportaciones filantrópicas en mantenimiento', 'normal')">
+                            <i class="fa-solid fa-heart-pulse service-icon-premium donations"></i>
+                            <h4>Donaciones Filantrópicas</h4>
+                            <p>Aportaciones de Impacto Global</p>
+                        </div>
                     </div>
                 </div>
 
-                <div style="margin-top: 1.5rem;">
-                    <button class="btn btn-primary" onclick="obtenerHistorialEntretenimiento()">
-                        <i class="fa-solid fa-clock-history" style="margin-right: 8px;"></i> Ver Historial de Pagos Externos
-                    </button>
+                <div id="payments-entertainment-view" class="hidden">
+                    <div class="section-intro" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h2>Pasarela de Servicios de Entretenimiento (API Externa)</h2>
+                            <p>Liquidación directa mediante la pasarela en la nube con confirmación de seguridad.</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="closeEntertainmentSubPage()">
+                            <i class="fa-solid fa-arrow-left" style="margin-right: 8px;"></i> Regresar a Categorías
+                        </button>
+                    </div>
+
+                    <div class="services-interactive-grid" style="margin-top: 2rem;">
+                        <div class="card service-tile sub-pay-tile" onclick="ejecutarPagoEntretenimiento(1, 'Netflix')">
+                            <i class="fa-solid fa-circle-play service-icon-premium" style="background-color: rgba(229,9,20,0.15); color: #e50914;"></i>
+                            <h4>Pagar Netflix</h4>
+                            <p>ID Servicio: 1</p>
+                        </div>
+                        <div class="card service-tile sub-pay-tile" onclick="ejecutarPagoEntretenimiento(2, 'HBO')">
+                            <i class="fa-solid fa-clapperboard service-icon-premium" style="background-color: rgba(128,0,128,0.15); color: #a855f7;"></i>
+                            <h4>Pagar HBO</h4>
+                            <p>ID Servicio: 2</p>
+                        </div>
+                        <div class="card service-tile sub-pay-tile" onclick="ejecutarPagoEntretenimiento(3, 'Paramount')">
+                            <i class="fa-solid fa-video service-icon-premium" style="background-color: rgba(0,123,255,0.15); color: #007BFF;"></i>
+                            <h4>Pagar Paramount</h4>
+                            <p>ID Servicio: 3</p>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1.5rem;">
+                        <button class="btn btn-primary" onclick="obtenerHistorialEntretenimiento()">
+                            <i class="fa-solid fa-clock-history" style="margin-right: 8px;"></i> Ver Historial de Pagos Externos
+                        </button>
+                    </div>
+
+                    <div id="resultado-entretenimiento" class="card table-card-layout" style="margin-top: 2rem; display: none;"></div>
                 </div>
 
-                <div id="resultado-entretenimiento" class="card table-card-layout" style="margin-top: 2rem; display: none;"></div>
             </section>
 
             <section id="view-transfers" class="app-view">

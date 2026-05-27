@@ -47,9 +47,8 @@ function setupEventListeners() {
     document.getElementById("form-recover")?.addEventListener("submit", handleRecover);
 
     document.getElementById("form-transfer")?.addEventListener("submit", handleTransfer);
-    document.getElementById("form-pago")?.addEventListener("submit", handlePago);
     
-    // Vinculación del nuevo formulario de depósitos
+    // Vinculación del formulario de depósitos
     document.getElementById("form-deposit")?.addEventListener("submit", handleDeposit);
 
     document.getElementById("btn-logout")?.addEventListener("click", logout);
@@ -188,7 +187,7 @@ async function actualizarSaldoVista() {
 }
 
 // ========================================
-// NUEVO: PROCESAMIENTO DE DEPÓSITOS DE CAPITAL
+// PROCESAMIENTO DE DEPÓSITOS DE CAPITAL
 // ========================================
 function handleDeposit(e) {
     e.preventDefault();
@@ -200,11 +199,9 @@ function handleDeposit(e) {
         return;
     }
 
-    // Aumento de balance reflejado directamente en la interfaz del ecosistema Aura
     appState.saldo += monto;
     document.getElementById("dashboard-balance").innerText = "Q" + formatMoney(appState.saldo);
 
-    // Registro inmediato en la cola de análisis local
     const nuevoMovimiento = {
         tipo: "Depósito de Capital",
         fecha: new Date().toISOString(),
@@ -212,7 +209,6 @@ function handleDeposit(e) {
     };
     appState.movimientos.unshift(nuevoMovimiento);
 
-    // Actualizar log visual del dashboard
     const tbody = document.getElementById("transactions-log");
     if (tbody) {
         const tr = document.createElement("tr");
@@ -261,41 +257,30 @@ async function handleTransfer(e) {
 }
 
 // ========================================
-// GESTIÓN: LIQUIDAR SERVICIOS (TRADICIONAL)
+// CONTROL COGNITIVO INTERNO DE LA SUB-PÁGINA
 // ========================================
-async function handlePago(e) {
-    e.preventDefault();
-
-    const monto = parseFloat(document.getElementById("pago-monto").value);
-    const servicio = document.getElementById("pago-servicio").value;
-
-    if (monto > appState.saldo) {
-        showToast("Fondos insuficientes para esta transacción", "error");
-        return;
-    }
-
-    try {
-        const res = await fetch(`${API}/api/Banco/procesar?cuentaId=${appState.cuentaId}&monto=${monto}&servicio=${encodeURIComponent(servicio)}`, {
-            method: "POST"
-        });
-
-        if (!res.ok) throw new Error();
-
-        showToast(`Pago de servicio ${servicio} procesado ✅`, "success");
-        document.getElementById("form-pago").reset();
-        cargarDatos();
-        navigateToView("view-dashboard");
-
-    } catch {
-        showToast("Error al procesar el pago del servicio", "error");
+function openEntertainmentSubPage() {
+    document.getElementById("payments-categories-view").classList.add("hidden");
+    document.getElementById("payments-entertainment-view").classList.remove("hidden");
+    
+    // Limpiar logs visuales anteriores por estética de renderizado
+    const resDiv = document.getElementById("resultado-entretenimiento");
+    if(resDiv) {
+        resDiv.style.display = "none";
+        resDiv.innerHTML = "";
     }
 }
 
+function closeEntertainmentSubPage() {
+    document.getElementById("payments-entertainment-view").classList.add("hidden");
+    document.getElementById("payments-categories-view").classList.remove("hidden");
+}
+
 // ========================================
-// NUEVO: INTEGRACIÓN COMPLETA SUB-PÁGINA ENTREMAIENTOS
+// INTEGRACIÓN PASARELA ENTRETENIMIENTO EXTERNA
 // ========================================
 async function ejecutarPagoEntretenimiento(servicioId, nombreServicio) {
-    // MÉTODO DE CONFIRMACIÓN DE SEGURIDAD REQUERIDO
+    // MÉTODO DE CONFIRMACIÓN DE SEGURIDAD
     const seguro = confirm(`¿Desea autorizar el pago seguro para la plataforma ${nombreServicio}?`);
     if (!seguro) return;
 
@@ -326,7 +311,6 @@ async function ejecutarPagoEntretenimiento(servicioId, nombreServicio) {
             `;
             showToast(`Pago de ${nombreServicio} Aprobado`, "success");
             
-            // Sincronizar saldo interno tras la operación exitosa externa
             if(data.pago.monto) {
                 appState.saldo -= parseFloat(data.pago.monto);
                 document.getElementById("dashboard-balance").innerText = "Q" + formatMoney(appState.saldo);
@@ -478,15 +462,6 @@ function renderFinancialChart(movimientos) {
     });
 }
 
-// Helper Interactivo para la sección rápida de pagos tradicionales
-function selectServiceTemplate(serviceName) {
-    const selectEl = document.getElementById("pago-servicio");
-    if(selectEl) {
-        selectEl.value = serviceName;
-        showToast(`Proveedor ${serviceName} seleccionado.`, "normal");
-    }
-}
-
 // ========================================
 // ENRUTADOR DE NAVEGACIÓN INTERNA (SPA)
 // ========================================
@@ -496,6 +471,11 @@ function navigateToView(viewId) {
 
     document.querySelectorAll(".menu-item").forEach(i => i.classList.remove("active"));
     document.querySelector(`[data-target="${viewId}"]`)?.classList.add("active");
+
+    // Reiniciar sub-vista al cambiar o regresar a la pestaña de pagos
+    if (viewId === "view-payments") {
+        closeEntertainmentSubPage();
+    }
 }
 
 // ========================================
@@ -508,6 +488,7 @@ function formatMoney(num) {
     });
 }
 
+// Format optimizado para etiquetas scannables de Chart.js
 function formatFecha(f) {
     if (!f) return "";
     return new Date(f).toLocaleDateString("es-GT", { day: 'numeric', month: 'short' });
