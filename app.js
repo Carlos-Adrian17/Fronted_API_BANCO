@@ -189,8 +189,10 @@ async function actualizarSaldoVista() {
 // ========================================
 // PROCESAMIENTO DE DEPÓSITOS DE CAPITAL
 // ========================================
-function handleDeposit(e) {
+async function handleDeposit(e) {
+
     e.preventDefault();
+
     const montoInput = document.getElementById("deposit-amount");
     const monto = parseFloat(montoInput.value);
 
@@ -199,31 +201,28 @@ function handleDeposit(e) {
         return;
     }
 
-    appState.saldo += monto;
-    document.getElementById("dashboard-balance").innerText = "Q" + formatMoney(appState.saldo);
+    try {
 
-    const nuevoMovimiento = {
-        tipo: "Depósito de Capital",
-        fecha: new Date().toISOString(),
-        monto: monto
-    };
-    appState.movimientos.unshift(nuevoMovimiento);
+        const res = await fetch(`${API}/api/Cuenta/deposito?cuentaId=${appState.cuentaId}&monto=${monto}`, {
+            method: "POST"
+        });
 
-    const tbody = document.getElementById("transactions-log");
-    if (tbody) {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td><strong>${nuevoMovimiento.tipo}</strong></td>
-            <td>${formatFecha(nuevoMovimiento.fecha)}</td>
-            <td class="text-right" style="font-weight:600; color: var(--accent-emerald);">Q${formatMoney(nuevoMovimiento.monto)}</td>
-        `;
-        tbody.insertBefore(tr, tbody.firstChild);
+        if (!res.ok) throw new Error();
+
+        showToast(`Depósito de Q${formatMoney(monto)} completado exitosamente`, "success");
+
+        montoInput.value = "";
+
+        await cargarDatos(); // ✅ esto actualiza saldo REAL
+
+    } catch (error) {
+
+        console.error(error);
+        showToast("Error al procesar el depósito", "error");
+
     }
-
-    renderFinancialChart(appState.movimientos);
-    showToast(`Depósito de Q${formatMoney(monto)} completado exitosamente`, "success");
-    montoInput.value = "";
 }
+
 
 // ========================================
 // GESTIÓN: ENVIAR TRANSFERENCIAS
@@ -333,15 +332,22 @@ async function ejecutarPagoEntretenimiento(servicioId, nombreServicio) {
 }
 
 async function obtenerHistorialEntretenimiento() {
+
     const resultadoDiv = document.getElementById("resultado-entretenimiento");
+
     resultadoDiv.style.display = "block";
     resultadoDiv.innerHTML = "<p><i class='fa-solid fa-circle-notch fa-spin'></i> Extrayendo historial de pagos desde el nodo externo...</p>";
 
     try {
+
         const response = await fetch("https://webapipagon5214.azurewebsites.net/api/Pagos");
         const data = await response.json();
 
-        if (!data || data.length === 0) {
+        // ✅ CORRECCIÓN: FILTRAR SOLO PAGOS DEL USUARIO ACTUAL
+        const dataFiltrado = data.filter(pago => pago.usuarioBancoId == appState.cliente.id);
+
+        // ✅ VALIDACIÓN CORREGIDA
+        if (!dataFiltrado || dataFiltrado.length === 0) {
             resultadoDiv.innerHTML = "<p>No se registran transacciones externas en la pasarela actual.</p>";
             return;
         }
@@ -363,8 +369,11 @@ async function obtenerHistorialEntretenimiento() {
                     <tbody>
         `;
 
-        data.forEach(pago => {
+        // ✅ LOOP CORREGIDO
+        dataFiltrado.forEach(pago => {
+
             const statusClass = pago.estado === "Aprobado" ? "txt-aprobado" : "txt-rechazado";
+
             html += `
                 <tr>
                     <td>${pago.id}</td>
@@ -378,9 +387,11 @@ async function obtenerHistorialEntretenimiento() {
         });
 
         html += "</tbody></table></div>";
+
         resultadoDiv.innerHTML = html;
 
     } catch (error) {
+
         resultadoDiv.innerHTML = "<p style='color: var(--accent-crimson);'>⚠️ Imposible recuperar el log consolidado de la API externa</p>";
         console.error(error);
     }
