@@ -47,8 +47,9 @@ function setupEventListeners() {
     document.getElementById("form-recover")?.addEventListener("submit", handleRecover);
 
     document.getElementById("form-transfer")?.addEventListener("submit", handleTransfer);
+    document.getElementById("form-pago")?.addEventListener("submit", handlePago);
     
-    // Vinculación del formulario de depósitos
+    // CORRECCIÓN: Se añade el escuchador para el formulario de depósito
     document.getElementById("form-deposit")?.addEventListener("submit", handleDeposit);
 
     document.getElementById("btn-logout")?.addEventListener("click", logout);
@@ -63,7 +64,6 @@ async function handleLogin(e) {
     const dpi = document.getElementById("login-dpi").value;
     const pass = document.getElementById("login-password").value;
 
-    type = "POST";
     try {
         const res = await fetch(`${API}/api/Cliente/login?dpi=${dpi}&password=${pass}`, {
             method: "POST"
@@ -129,6 +129,7 @@ async function handleRecover(e) {
     const email = document.getElementById("recover-email").value;
 
     try {
+        // Ejecución simulada/protocolo con fallback limpio para la pasarela de recuperación de la API
         const url = `${API}/api/Cliente/recuperar?dpi=${encodeURIComponent(dpi)}&correo=${encodeURIComponent(email)}`;
         await fetch(url, { method: "POST" }).catch(() => console.log("Protocolo de recuperación enviado"));
 
@@ -167,14 +168,14 @@ function enterApp(cuenta) {
 // CARGA GLOBAL DE FLUJOS RECIENTES
 // ========================================
 function cargarDatos() {
-    actualizarSaldoVista();
+    actualizarSaldo();
     cargarMovimientos();
 }
 
 // ========================================
 // REFRESCAR SALDO FINANCIERO
 // ========================================
-async function actualizarSaldoVista() {
+async function actualizarSaldo() {
     try {
         const res = await fetch(`${API}/api/Cuenta/saldo?cuentaId=${appState.cuentaId}`);
         const data = await res.json();
@@ -188,11 +189,13 @@ async function actualizarSaldoVista() {
 }
 
 // ========================================
-// PROCESAMIENTO DE DEPÓSITOS DE CAPITAL
+// CORRECCIÓN: PROCESAMIENTO DE DEPÓSITOS DE CAPITAL (PERSISTENCIA Y SINCRONIZACIÓN)
 // ========================================
-function handleDeposit(e) {
+async function handleDeposit(e) {
     e.preventDefault();
     const montoInput = document.getElementById("deposit-amount");
+    if (!montoInput) return;
+
     const monto = parseFloat(montoInput.value);
 
     if (monto <= 0 || isNaN(monto)) {
@@ -200,30 +203,49 @@ function handleDeposit(e) {
         return;
     }
 
-    appState.saldo += monto;
-    document.getElementById("dashboard-balance").innerText = "Q" + formatMoney(appState.saldo);
+    try {
+        // Intentar guardar el depósito en el servidor para que persista al cerrar sesión
+        const res = await fetch(`${API}/api/Cuenta/depositar?cuentaId=${appState.cuentaId}&monto=${monto}`, {
+            method: "POST"
+        });
 
-    const nuevoMovimiento = {
-        tipo: "Depósito de Capital",
-        fecha: new Date().toISOString(),
-        monto: monto
-    };
-    appState.movimientos.unshift(nuevoMovimiento);
+        if (res.ok) {
+            showToast(`Depósito de Q${formatMoney(monto)} realizado con éxito ✅`, "success");
+            montoInput.value = "";
+            cargarDatos(); // Recarga saldo y movimientos actualizados desde el servidor
+            return;
+        }
+        throw new Error("Endpoint de depósito no disponible o no soportado");
 
-    const tbody = document.getElementById("transactions-log");
-    if (tbody) {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td><strong>${nuevoMovimiento.tipo}</strong></td>
-            <td>${formatFecha(nuevoMovimiento.fecha)}</td>
-            <td class="text-right" style="font-weight:600; color: var(--accent-emerald);">Q${formatMoney(nuevoMovimiento.monto)}</td>
-        `;
-        tbody.insertBefore(tr, tbody.firstChild);
+    } catch (err) {
+        console.warn("Error de conexión con la API de depósito. Aplicando respaldo de sesión local:", err);
+
+        // Respaldo (Fallback): Sincroniza la variable interna y el HTML para que deje operar al usuario en la sesión actual
+        appState.saldo += monto;
+        document.getElementById("dashboard-balance").innerText = "Q" + formatMoney(appState.saldo);
+
+        const nuevoMovimiento = {
+            tipo: "Depósito de Capital",
+            fecha: new Date().toISOString(),
+            monto: monto
+        };
+        appState.movimientos.unshift(nuevoMovimiento);
+
+        const tbody = document.getElementById("transactions-log");
+        if (tbody) {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td><strong>${nuevoMovimiento.tipo}</strong></td>
+                <td>${formatFecha(nuevoMovimiento.fecha)}</td>
+                <td class="text-right" style="font-weight:600; color: var(--accent-emerald);">Q${formatMoney(nuevoMovimiento.monto)}</td>
+            `;
+            tbody.insertBefore(tr, tbody.firstChild);
+        }
+
+        renderFinancialChart(appState.movimientos);
+        showToast(`Depósito de Q${formatMoney(monto)} aplicado localmente`, "success");
+        montoInput.value = "";
     }
-
-    renderFinancialChart(appState.movimientos);
-    showToast(`Depósito de Q${formatMoney(monto)} completado exitosamente`, "success");
-    montoInput.value = "";
 }
 
 // ========================================
@@ -258,136 +280,33 @@ async function handleTransfer(e) {
 }
 
 // ========================================
-// CONTROL COGNITIVO INTERNO DE LA SUB-PÁGINA
+// GESTIÓN: LIQUIDAR SERVICIOS
 // ========================================
-function openEntertainmentSubPage() {
-    document.getElementById("payments-categories-view").classList.add("hidden");
-    document.getElementById("payments-entertainment-view").classList.remove("hidden");
-    
-    // Limpiar logs visuales anteriores por estética de renderizado
-    const resDiv = document.getElementById("resultado-entretenimiento");
-    if(resDiv) {
-        resDiv.style.display = "none";
-        resDiv.innerHTML = "";
+async function handlePago(e) {
+    e.preventDefault();
+
+    const monto = parseFloat(document.getElementById("pago-monto").value);
+    const servicio = document.getElementById("pago-servicio").value;
+
+    if (monto > appState.saldo) {
+        showToast("Fondos insuficientes para esta transacción", "error");
+        return;
     }
-}
-
-function closeEntertainmentSubPage() {
-    document.getElementById("payments-entertainment-view").classList.add("hidden");
-    document.getElementById("payments-categories-view").classList.remove("hidden");
-}
-
-// ========================================
-// INTEGRACIÓN PASARELA ENTRETENIMIENTO EXTERNA
-// ========================================
-async function ejecutarPagoEntretenimiento(servicioId, nombreServicio) {
-    // MÉTODO DE CONFIRMACIÓN DE SEGURIDAD
-    const seguro = confirm(`¿Desea autorizar el pago seguro para la plataforma ${nombreServicio}?`);
-    if (!seguro) return;
-
-    const resultadoDiv = document.getElementById("resultado-entretenimiento");
-    resultadoDiv.style.display = "block";
-    resultadoDiv.innerHTML = "<p><i class='fa-solid fa-circle-notch fa-spin'></i> Transmitiendo datos a la pasarela externa...</p>";
 
     try {
-        const response = await fetch("https://webapipagon5214.azurewebsites.net/api/Pagos/pagar", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                servicioId: servicioId,
-                usuarioBancoId: appState.cliente ? appState.cliente.id : 1
-            })
+        const res = await fetch(`${API}/api/Banco/procesar?cuentaId=${appState.cuentaId}&monto=${monto}&servicio=${encodeURIComponent(servicio)}`, {
+            method: "POST"
         });
 
-        const data = await response.json();
+        if (!res.ok) throw new Error();
 
-        if (data.pago && data.pago.estado === "Aprobado") {
-            resultadoDiv.innerHTML = `
-                <h3 style="color: var(--accent-emerald); margin-bottom: 0.8rem;"><i class="fa-solid fa-circle-check"></i> Pago Autorizado de Forma Exitosa</h3>
-                <p style="margin-bottom:0.4rem;"><strong>Servicio Vinculado:</strong> ${data.pago.servicio}</p>
-                <p style="margin-bottom:0.4rem;"><strong>Monto Liquidado:</strong> Q${data.pago.monto}</p>
-                <p><strong>Código Único Referencia Banco:</strong> ${data.pago.referenciaBanco}</p>
-            `;
-            showToast(`Pago de ${nombreServicio} Aprobado`, "success");
-            
-            if(data.pago.monto) {
-                appState.saldo -= parseFloat(data.pago.monto);
-                document.getElementById("dashboard-balance").innerText = "Q" + formatMoney(appState.saldo);
-            }
-        } else {
-            const motivo = data.pago ? data.pago.motivoRechazo : "Fondos insuficientes detectados";
-            resultadoDiv.innerHTML = `
-                <h3 style="color: var(--accent-crimson); margin-bottom: 0.8rem;"><i class="fa-solid fa-circle-xmark"></i> Pago Denegado por la Entidad</h3>
-                <p style="margin-bottom:0.4rem;"><strong>Servicio:</strong> ${nombreServicio}</p>
-                <p><strong>Causa de Rechazo:</strong> ${motivo}</p>
-            `;
-            showToast("La transacción externa fue rechazada", "error");
-        }
+        showToast(`Pago de servicio ${servicio} procesado ✅`, "success");
+        document.getElementById("form-pago").reset();
+        cargarDatos();
+        navigateToView("view-dashboard");
 
-    } catch (error) {
-        resultadoDiv.innerHTML = "<p style='color: var(--accent-crimson);'>⚠️ Error crítico de comunicación con la API de Entretenimiento</p>";
-        console.error(error);
-        showToast("Error de respuesta en pasarela", "error");
-    }
-}
-
-async function obtenerHistorialEntretenimiento() {
-    const resultadoDiv = document.getElementById("resultado-entretenimiento");
-    resultadoDiv.style.display = "block";
-    resultadoDiv.innerHTML = "<p><i class='fa-solid fa-circle-notch fa-spin'></i> Extrayendo historial de pagos desde el nodo externo...</p>";
-
-    try {
-        const response = await fetch("https://webapipagon5214.azurewebsites.net/api/Pagos");
-        let data = await response.json();
-
-        // CORRECCIÓN INTEGRADA: Filtrar la respuesta global para mostrar únicamente los registros que coinciden con el ID del cliente actual
-        const currentUserId = appState.cliente ? appState.cliente.id : 1;
-        data = data.filter(pago => pago.usuarioBancoId === currentUserId);
-
-        if (!data || data.length === 0) {
-            resultadoDiv.innerHTML = "<p>No se registran transacciones externas en la pasarela para este usuario.</p>";
-            return;
-        }
-
-        let html = `
-            <h3 style="margin-bottom: 1.2rem;">Historial de Transacciones de Entretenimiento</h3>
-            <div class="table-responsive">
-                <table class="premium-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Servicio</th>
-                            <th>Monto</th>
-                            <th>Estado Transacción</th>
-                            <th>Fecha</th>
-                            <th>Referencia</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-        `;
-
-        data.forEach(pago => {
-            const statusClass = pago.estado === "Aprobado" ? "txt-aprobado" : "txt-rechazado";
-            html += `
-                <tr>
-                    <td>${pago.id}</td>
-                    <td><strong>${pago.servicio}</strong></td>
-                    <td>Q${formatMoney(pago.monto || 0)}</td>
-                    <td class="${statusClass}">${pago.estado}</td>
-                    <td>${new Date(pago.fecha).toLocaleDateString("es-GT")}</td>
-                    <td>${pago.referenciaBanco || "N/A"}</td>
-                </tr>
-            `;
-        });
-
-        html += "</tbody></table></div>";
-        resultadoDiv.innerHTML = html;
-
-    } catch (error) {
-        resultadoDiv.innerHTML = "<p style='color: var(--accent-crimson);'>⚠️ Imposible recuperar el log consolidado de la API externa</p>";
-        console.error(error);
+    } catch {
+        showToast("Error al procesar el pago del servicio", "error");
     }
 }
 
@@ -413,6 +332,7 @@ async function cargarMovimientos() {
             tbody.appendChild(tr);
         });
 
+        // Llamada para actualizar el Gráfico de Rendimiento Premium
         renderFinancialChart(data);
 
     } catch {
@@ -427,10 +347,12 @@ function renderFinancialChart(movimientos) {
     const ctx = document.getElementById('analytics-chart');
     if (!ctx) return;
 
+    // Destruir instancia previa para evitar bugs de renderizado sobre el mismo canvas
     if (financialChartInstance) {
         financialChartInstance.destroy();
     }
 
+    // Estructurar datos de movimientos o simular curva de rendimiento limpia
     const labels = movimientos.length > 0 ? movimientos.map(m => formatFecha(m.fecha)).reverse() : ["Ene", "Feb", "Mar", "Abr", "May"];
     const dataPoints = movimientos.length > 0 ? movimientos.map(m => m.monto).reverse() : [1200, 3400, 2100, 5600, appState.saldo];
 
@@ -467,6 +389,15 @@ function renderFinancialChart(movimientos) {
     });
 }
 
+// Helper Interactivo para la sección rápida de pagos
+function selectServiceTemplate(serviceName) {
+    const selectEl = document.getElementById("pago-servicio");
+    if(selectEl) {
+        selectEl.value = serviceName;
+        showToast(`Proveedor ${serviceName} seleccionado.`, "normal");
+    }
+}
+
 // ========================================
 // ENRUTADOR DE NAVEGACIÓN INTERNA (SPA)
 // ========================================
@@ -476,11 +407,6 @@ function navigateToView(viewId) {
 
     document.querySelectorAll(".menu-item").forEach(i => i.classList.remove("active"));
     document.querySelector(`[data-target="${viewId}"]`)?.classList.add("active");
-
-    // Reiniciar sub-vista al cambiar o regresar a la pestaña de pagos
-    if (viewId === "view-payments") {
-        closeEntertainmentSubPage();
-    }
 }
 
 // ========================================
@@ -493,7 +419,6 @@ function formatMoney(num) {
     });
 }
 
-// Format optimizado para etiquetas scannables de Chart.js
 function formatFecha(f) {
     if (!f) return "";
     return new Date(f).toLocaleDateString("es-GT", { day: 'numeric', month: 'short' });
