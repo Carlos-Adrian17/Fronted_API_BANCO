@@ -295,7 +295,7 @@ async function ejecutarPagoEntretenimiento(servicioId, nombreServicio) {
             },
             body: JSON.stringify({
                 servicioId: servicioId,
-                usuarioBancoId: appState.cliente ? appState.cliente.id : 1
+                usuarioBancoId: appState.cuentaId
             })
         });
 
