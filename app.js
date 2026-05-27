@@ -47,6 +47,7 @@ function setupEventListeners() {
     document.getElementById("form-recover")?.addEventListener("submit", handleRecover);
 
     document.getElementById("form-transfer")?.addEventListener("submit", handleTransfer);
+    document.getElementById("form-deposit")?.addEventListener("submit", handleDeposit); // SOLUCIÓN AL BUG: Captura el depósito sin recargar la página
     document.getElementById("form-pago")?.addEventListener("submit", handlePago);
 
     document.getElementById("btn-logout")?.addEventListener("click", logout);
@@ -201,6 +202,49 @@ async function actualizarSaldo() {
 }
 
 // ========================================
+// GESTIÓN: EFECTUAR DEPÓSITO BANCARIO
+// ========================================
+async function handleDeposit(e) {
+    e.preventDefault(); // Detiene por completo la recarga de página y la pérdida de sesión
+
+    const montoEl = document.getElementById("deposit-amount");
+    if (!montoEl) return;
+
+    const monto = parseFloat(montoEl.value);
+
+    if (isNaN(monto) || monto <= 0) {
+        showToast("Ingrese un monto de depósito válido", "error");
+        return;
+    }
+
+    try {
+        // Ejecución hacia el controlador de Banco encargado de transacciones financieras
+        let res = await fetch(`${API}/api/Banco/depositar?cuentaId=${appState.cuentaId}&monto=${monto}`, {
+            method: "POST"
+        });
+
+        // Mecanismo Fallback por si la arquitectura aloja el endpoint en la ruta de Cuenta
+        if (!res.ok) {
+            res = await fetch(`${API}/api/Cuenta/depositar?cuentaId=${appState.cuentaId}&monto=${monto}`, {
+                method: "POST"
+            });
+        }
+
+        if (!res.ok) throw new Error();
+
+        showToast(`Depósito de Q${formatMoney(monto)} procesado en base de datos ✅`, "success");
+        montoEl.value = "";
+        
+        // Sincroniza el balance global y los estados gráficos con los nuevos datos persistidos
+        cargarDatos();
+
+    } catch (err) {
+        console.error(err);
+        showToast("Error al procesar el depósito en el servidor corporativo", "error");
+    }
+}
+
+// ========================================
 // GESTIÓN: ENVIAR TRANSFERENCIAS
 // ========================================
 async function handleTransfer(e) {
@@ -237,7 +281,7 @@ async function handleTransfer(e) {
 }
 
 // ========================================
-// GESTIÓN: LIQUIDAR SERVICIOS
+// GESTIÓN: LIQUIDAR SERVICIOS (Formulario genérico backup)
 // ========================================
 async function handlePago(e) {
     e.preventDefault();
@@ -361,6 +405,103 @@ function selectServiceTemplate(serviceName) {
         selectEl.value = serviceName;
         showToast(`Proveedor ${serviceName} seleccionado.`, "normal");
     }
+}
+
+// ========================================
+// INTEGRACIÓN: PASARELA DE ENTRETENIMIENTO
+// ========================================
+function openEntertainmentSubPage() {
+    document.getElementById("payments-categories-view")?.classList.add("hidden");
+    document.getElementById("payments-entertainment-view")?.classList.remove("hidden");
+}
+
+function closeEntertainmentSubPage() {
+    document.getElementById("payments-entertainment-view")?.classList.add("hidden");
+    document.getElementById("payments-categories-view")?.classList.remove("hidden");
+}
+
+async function ejecutarPagoEntretenimiento(id, nombre) {
+    const montoStr = prompt(`Pasarela Digital Aura — Ingrese el monto líquido a pagar para ${nombre}:`, "79.00");
+    if (montoStr === null) return; // Operación abortada por el usuario corporativo
+
+    const monto = parseFloat(montoStr);
+    if (isNaN(monto) || monto <= 0) {
+        showToast("Monto ingresado no válido", "error");
+        return;
+    }
+
+    if (monto > appState.saldo) {
+        showToast("Fondos insuficientes para liquidar esta suscripción", "error");
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API}/api/Banco/procesar?cuentaId=${appState.cuentaId}&monto=${monto}&servicio=${encodeURIComponent(nombre)}`, {
+            method: "POST"
+        });
+
+        if (!res.ok) throw new Error();
+
+        showToast(`Suscripción a ${nombre} (ID: ${id}) liquidada con éxito ✅`, "success");
+        cargarDatos(); // Sincroniza base de datos
+
+        // Si el panel de desglose de entretenimiento está abierto, actualiza su contenido automáticamente
+        if (document.getElementById("resultado-entretenimiento")?.style.display === "block") {
+            obtenerHistorialEntretenimiento();
+        }
+
+    } catch (err) {
+        console.error(err);
+        showToast(`Error de interconexión al procesar el pago de ${nombre}`, "error");
+    }
+}
+
+function obtenerHistorialEntretenimiento() {
+    const contenedor = document.getElementById("resultado-entretenimiento");
+    if (!contenedor) return;
+
+    // Filtra del log de movimientos traídos de la base de datos aquellos vinculados a streaming
+    const streamingLogs = appState.movimientos.filter(m => {
+        const tipo = (m.tipo || "").toLowerCase();
+        return tipo.includes("netflix") || tipo.includes("hbo") || tipo.includes("paramount") || tipo.includes("entretenimiento");
+    });
+
+    contenedor.style.display = "block";
+
+    if (streamingLogs.length === 0) {
+        contenedor.innerHTML = `
+            <h4 style="margin-bottom: 0.5rem; color: #d4af37;">Historial de Pagos Externos</h4>
+            <p style="color: #9ca3af; font-size: 0.9rem;">No se registran transacciones externas hacia plataformas de contenido en este período fiscal.</p>
+        `;
+        return;
+    }
+
+    let html = `
+        <h4 style="margin-bottom: 1rem; color: #d4af37;">Historial de Pagos Externos (Streaming)</h4>
+        <div class="table-responsive">
+            <table class="premium-table" style="margin-top: 0;">
+                <thead>
+                    <tr>
+                        <th>Concepto / Proveedor</th>
+                        <th>Fecha de Cargo</th>
+                        <th class="text-right">Monto Líquido</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    streamingLogs.forEach(m => {
+        html += `
+            <tr>
+                <td><span style="color: #ef4444; margin-right: 6px;">●</span> Debito ${m.tipo}</td>
+                <td>${formatFecha(m.fecha)}</td>
+                <td class="text-right" style="font-weight:600; color: #ef4444;">-Q${formatMoney(m.monto)}</td>
+            </tr>
+        `;
+    });
+
+    html += `</tbody></table></div>`;
+    contenedor.innerHTML = html;
 }
 
 // ========================================
