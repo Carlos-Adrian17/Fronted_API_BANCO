@@ -45,12 +45,15 @@ function setupEventListeners() {
     document.getElementById("form-login")?.addEventListener("submit", handleLogin);
     document.getElementById("form-register")?.addEventListener("submit", handleRegister);
     document.getElementById("form-recover")?.addEventListener("submit", handleRecover);
-    
+
     document.getElementById("form-transfer")?.addEventListener("submit", handleTransfer);
+    
+    // Vinculación del formulario de depósitos
     document.getElementById("form-deposit")?.addEventListener("submit", handleDeposit);
     
-    // NOTA: Se eliminó el escuchador del formulario de liquidación estándar a petición.
-    
+    // Vinculación del nuevo formulario de servicios modificado
+    document.getElementById("form-pago")?.addEventListener("submit", handlePago);
+
     document.getElementById("btn-logout")?.addEventListener("click", logout);
 }
 
@@ -144,7 +147,7 @@ async function handleRecover(e) {
 // ========================================
 function switchAuthForm(tipo) {
     document.querySelectorAll(".auth-form").forEach(f => f.classList.remove("active"));
-    document.getElementById(`form-${tipo}`)?.classList.add("active");
+    document.getElementById(`form-${tipo}`).classList.add("active");
 }
 
 // ========================================
@@ -257,30 +260,18 @@ async function handleTransfer(e) {
 }
 
 // ========================================
-// MÓDULOS EN MANTENIMIENTO
+// PROCESAMIENTO DE PAGO DE SERVICIOS
 // ========================================
-function selectServiceTemplate(serviceName) {
-    // Al eliminar la liquidación estándar, las otras opciones entran en modo de mantenimiento
-    showToast(`El módulo de ${serviceName} se encuentra en mantenimiento 🛠️`, "normal");
-}
+function handlePago(e) {
+    e.preventDefault();
 
-// ========================================
-// CONTROL COGNITIVO INTERNO DE LA SUB-PÁGINA
-// ========================================
-function openEntertainmentSubPage() {
-    document.getElementById("payments-categories-view")?.classList.add("hidden");
-    document.getElementById("payments-entertainment-view")?.classList.remove("hidden");
-    
-    const resDiv = document.getElementById("resultado-entretenimiento");
-    if(resDiv) {
-        resDiv.style.display = "none";
-        resDiv.innerHTML = "";
+    const servicio = document.getElementById("pago-servicio").value;
+
+    if (servicio === "Entretenimiento") {
+        navigateToView("view-entertainment");
+    } else if (servicio === "Teléfono" || servicio === "Donaciones") {
+        showToast(`El módulo de ${servicio} se encuentra en mantenimiento 🛠️`, "normal");
     }
-}
-
-function closeEntertainmentSubPage() {
-    document.getElementById("payments-entertainment-view")?.classList.add("hidden");
-    document.getElementById("payments-categories-view")?.classList.remove("hidden");
 }
 
 // ========================================
@@ -292,7 +283,7 @@ async function ejecutarPagoEntretenimiento(servicioId, nombreServicio) {
 
     const resultadoDiv = document.getElementById("resultado-entretenimiento");
     resultadoDiv.style.display = "block";
-    resultadoDiv.innerHTML = "<p><i class='fa-solid fa-circle-notch fa-spin'></i> Transmitiendo datos a la pasarela externa...</p>";
+    resultadoDiv.innerHTML = "Procesando pago...";
 
     try {
         const response = await fetch("https://webapipagon5214.azurewebsites.net/api/Pagos/pagar", {
@@ -310,63 +301,74 @@ async function ejecutarPagoEntretenimiento(servicioId, nombreServicio) {
 
         if (data.pago && data.pago.estado === "Aprobado") {
             resultadoDiv.innerHTML = `
-                <h3 style="color: var(--accent-emerald); margin-bottom: 0.8rem;"><i class="fa-solid fa-circle-check"></i> Pago Autorizado de Forma Exitosa</h3>
-                <p style="margin-bottom:0.4rem;"><strong>Servicio Vinculado:</strong> ${data.pago.servicio}</p>
-                <p style="margin-bottom:0.4rem;"><strong>Monto Liquidado:</strong> Q${data.pago.monto}</p>
-                <p><strong>Código Único Referencia Banco:</strong> ${data.pago.referenciaBanco}</p>
+                <h3 style="color:lightgreen;">Pago realizado correctamente</h3>
+                Servicio: ${data.pago.servicio} <br>
+                Monto: Q${data.pago.monto} <br>
+                Referencia: ${data.pago.referenciaBanco}
             `;
             showToast(`Pago de ${nombreServicio} Aprobado`, "success");
             
-            if(data.pago.monto) {
+            // Deducción del saldo local para reflejar en el dashboard
+            if (data.pago.monto) {
                 appState.saldo -= parseFloat(data.pago.monto);
                 document.getElementById("dashboard-balance").innerText = "Q" + formatMoney(appState.saldo);
                 
-                // Actualizar log en pantalla visualmente sin recargar
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td><strong>Pago ${nombreServicio}</strong></td>
-                    <td>${formatFecha(new Date().toISOString())}</td>
-                    <td class="text-right" style="font-weight:600; color: var(--accent-crimson);">-Q${formatMoney(data.pago.monto)}</td>
-                `;
+                const nuevoMovimiento = {
+                    tipo: `Pago de ${nombreServicio}`,
+                    fecha: new Date().toISOString(),
+                    monto: -parseFloat(data.pago.monto)
+                };
+                appState.movimientos.unshift(nuevoMovimiento);
+                
                 const tbody = document.getElementById("transactions-log");
-                if (tbody) tbody.insertBefore(tr, tbody.firstChild);
+                if (tbody) {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td><strong>${nuevoMovimiento.tipo}</strong></td>
+                        <td>${formatFecha(nuevoMovimiento.fecha)}</td>
+                        <td class="text-right" style="color: var(--accent-crimson);">-Q${formatMoney(Math.abs(nuevoMovimiento.monto))}</td>
+                    `;
+                    tbody.insertBefore(tr, tbody.firstChild);
+                }
+                renderFinancialChart(appState.movimientos);
             }
+
         } else {
-            const motivo = data.pago ? data.pago.motivoRechazo : "Fondos insuficientes detectados";
+            const motivo = data.pago ? data.pago.motivoRechazo : "Fondos insuficientes";
             resultadoDiv.innerHTML = `
-                <h3 style="color: var(--accent-crimson); margin-bottom: 0.8rem;"><i class="fa-solid fa-circle-xmark"></i> Pago Denegado por la Entidad</h3>
-                <p style="margin-bottom:0.4rem;"><strong>Servicio:</strong> ${nombreServicio}</p>
-                <p><strong>Causa de Rechazo:</strong> ${motivo}</p>
+                <h3 style="color:red;">Pago rechazado</h3>
+                Servicio: ${nombreServicio} <br>
+                Motivo: ${motivo}
             `;
             showToast("La transacción externa fue rechazada", "error");
         }
 
     } catch (error) {
-        resultadoDiv.innerHTML = "<p style='color: var(--accent-crimson);'>⚠️ Error crítico de comunicación con la API de Entretenimiento</p>";
+        resultadoDiv.innerHTML = "⚠️ Error al conectar con la API";
         console.error(error);
-        showToast("Error de respuesta en pasarela", "error");
     }
 }
 
 async function obtenerHistorialEntretenimiento() {
     const resultadoDiv = document.getElementById("resultado-entretenimiento");
     resultadoDiv.style.display = "block";
-    resultadoDiv.innerHTML = "<p><i class='fa-solid fa-circle-notch fa-spin'></i> Extrayendo historial de pagos desde el nodo externo...</p>";
+    resultadoDiv.innerHTML = "Cargando historial...";
 
     try {
         const response = await fetch("https://webapipagon5214.azurewebsites.net/api/Pagos");
         let data = await response.json();
 
+        // Filtro corregido: Solo muestra los pagos del usuario activo
         const currentUserId = appState.cliente ? appState.cliente.id : 1;
         data = data.filter(pago => pago.usuarioBancoId === currentUserId);
 
         if (!data || data.length === 0) {
-            resultadoDiv.innerHTML = "<p>No se registran transacciones externas en la pasarela para este usuario.</p>";
+            resultadoDiv.innerHTML = "No hay pagos registrados para este usuario.";
             return;
         }
 
         let html = `
-            <h3 style="margin-bottom: 1.2rem;">Historial de Transacciones de Entretenimiento</h3>
+            <h2>Historial de Pagos</h2>
             <div class="table-responsive">
                 <table class="premium-table">
                     <thead>
@@ -374,7 +376,7 @@ async function obtenerHistorialEntretenimiento() {
                             <th>ID</th>
                             <th>Servicio</th>
                             <th>Monto</th>
-                            <th>Estado Transacción</th>
+                            <th>Estado</th>
                             <th>Fecha</th>
                             <th>Referencia</th>
                         </tr>
@@ -383,14 +385,16 @@ async function obtenerHistorialEntretenimiento() {
         `;
 
         data.forEach(pago => {
-            const statusClass = pago.estado === "Aprobado" ? "txt-aprobado" : "txt-rechazado";
+            const estadoClass = pago.estado === "Aprobado" ? "aprobado" : "rechazado";
+            const textColor = pago.estado === "Aprobado" ? "color: var(--accent-emerald);" : "color: var(--accent-crimson);";
+            
             html += `
                 <tr>
                     <td>${pago.id}</td>
-                    <td><strong>${pago.servicio}</strong></td>
+                    <td>${pago.servicio}</td>
                     <td>Q${formatMoney(pago.monto || 0)}</td>
-                    <td class="${statusClass}">${pago.estado}</td>
-                    <td>${new Date(pago.fecha).toLocaleDateString("es-GT")}</td>
+                    <td class="${estadoClass}" style="${textColor} font-weight: bold;">${pago.estado}</td>
+                    <td>${new Date(pago.fecha).toLocaleString("es-GT")}</td>
                     <td>${pago.referenciaBanco || "N/A"}</td>
                 </tr>
             `;
@@ -400,7 +404,7 @@ async function obtenerHistorialEntretenimiento() {
         resultadoDiv.innerHTML = html;
 
     } catch (error) {
-        resultadoDiv.innerHTML = "<p style='color: var(--accent-crimson);'>⚠️ Imposible recuperar el log consolidado de la API externa</p>";
+        resultadoDiv.innerHTML = "⚠️ Error al obtener historial";
         console.error(error);
     }
 }
@@ -482,18 +486,15 @@ function renderFinancialChart(movimientos) {
 }
 
 // ========================================
-// ENRUTADOR DE NAVEGACIÓN INTERNA (SPA)
+// ENRUTADOR DE NAVEGACIÓN INTERNA
 // ========================================
 function navigateToView(viewId) {
     document.querySelectorAll(".app-view").forEach(v => v.classList.remove("active"));
-    document.getElementById(viewId)?.classList.add("active");
+    const target = document.getElementById(viewId);
+    if (target) target.classList.add("active");
 
     document.querySelectorAll(".menu-item").forEach(i => i.classList.remove("active"));
     document.querySelector(`[data-target="${viewId}"]`)?.classList.add("active");
-
-    if (viewId === "view-payments") {
-        closeEntertainmentSubPage();
-    }
 }
 
 // ========================================
@@ -527,10 +528,10 @@ function logout() {
         financialChartInstance = null;
     }
 
-    document.getElementById("main-app")?.classList.add("hidden");
-    document.getElementById("auth-container")?.classList.remove("hidden");
+    document.getElementById("main-app").classList.add("hidden");
+    document.getElementById("auth-container").classList.remove("hidden");
     
-    document.getElementById("form-login")?.reset();
+    document.getElementById("form-login").reset();
     switchAuthForm("login");
 
     showToast("Sesión cerrada de manera segura ✅", "normal");
