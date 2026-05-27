@@ -48,7 +48,8 @@ function setupEventListeners() {
     
     document.getElementById("form-transfer")?.addEventListener("submit", handleTransfer);
     document.getElementById("form-deposit")?.addEventListener("submit", handleDeposit);
-    document.getElementById("form-pago")?.addEventListener("submit", handlePago);
+    
+    // NOTA: Se eliminó el escuchador del formulario de liquidación estándar a petición.
     
     document.getElementById("btn-logout")?.addEventListener("click", logout);
 }
@@ -189,7 +190,7 @@ async function actualizarSaldoVista() {
 // PROCESAMIENTO DE DEPÓSITOS DE CAPITAL
 // ========================================
 function handleDeposit(e) {
-    e.preventDefault(); // Evita el recargo de página que te cerraba la sesión
+    e.preventDefault();
     const montoInput = document.getElementById("deposit-amount");
     const monto = parseFloat(montoInput.value);
 
@@ -256,45 +257,11 @@ async function handleTransfer(e) {
 }
 
 // ========================================
-// GESTIÓN: LIQUIDAR SERVICIOS ESTÁNDAR
-// ========================================
-async function handlePago(e) {
-    e.preventDefault();
-
-    const monto = parseFloat(document.getElementById("pago-monto").value);
-    const servicio = document.getElementById("pago-servicio").value;
-
-    if (monto > appState.saldo) {
-        showToast("Fondos insuficientes para esta transacción", "error");
-        return;
-    }
-
-    try {
-        const res = await fetch(`${API}/api/Banco/procesar?cuentaId=${appState.cuentaId}&monto=${monto}&servicio=${encodeURIComponent(servicio)}`, {
-            method: "POST"
-        });
-
-        if (!res.ok) throw new Error();
-
-        showToast(`Pago de servicio ${servicio} procesado ✅`, "success");
-        document.getElementById("form-pago").reset();
-        cargarDatos();
-        navigateToView("view-dashboard");
-
-    } catch {
-        showToast("Error al procesar el pago del servicio", "error");
-    }
-}
-
-// ========================================
-// SELECCIÓN RÁPIDA DE PROVEEDOR
+// MÓDULOS EN MANTENIMIENTO
 // ========================================
 function selectServiceTemplate(serviceName) {
-    const selectEl = document.getElementById("pago-servicio");
-    if(selectEl) {
-        selectEl.value = serviceName;
-        showToast(`Proveedor ${serviceName} seleccionado.`, "normal");
-    }
+    // Al eliminar la liquidación estándar, las otras opciones entran en modo de mantenimiento
+    showToast(`El módulo de ${serviceName} se encuentra en mantenimiento 🛠️`, "normal");
 }
 
 // ========================================
@@ -390,7 +357,6 @@ async function obtenerHistorialEntretenimiento() {
         const response = await fetch("https://webapipagon5214.azurewebsites.net/api/Pagos");
         let data = await response.json();
 
-        // Filtro para mostrar únicamente los registros del cliente en sesión (Corrección Exigida)
         const currentUserId = appState.cliente ? appState.cliente.id : 1;
         data = data.filter(pago => pago.usuarioBancoId === currentUserId);
 
