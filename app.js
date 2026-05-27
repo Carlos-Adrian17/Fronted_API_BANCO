@@ -63,6 +63,7 @@ async function handleLogin(e) {
     const dpi = document.getElementById("login-dpi").value;
     const pass = document.getElementById("login-password").value;
 
+    type = "POST";
     try {
         const res = await fetch(`${API}/api/Cliente/login?dpi=${dpi}&password=${pass}`, {
             method: "POST"
@@ -339,10 +340,14 @@ async function obtenerHistorialEntretenimiento() {
 
     try {
         const response = await fetch("https://webapipagon5214.azurewebsites.net/api/Pagos");
-        const data = await response.json();
+        let data = await response.json();
+
+        // CORRECCIÓN INTEGRADA: Filtrar la respuesta global para mostrar únicamente los registros que coinciden con el ID del cliente actual
+        const currentUserId = appState.cliente ? appState.cliente.id : 1;
+        data = data.filter(pago => pago.usuarioBancoId === currentUserId);
 
         if (!data || data.length === 0) {
-            resultadoDiv.innerHTML = "<p>No se registran transacciones externas en la pasarela actual.</p>";
+            resultadoDiv.innerHTML = "<p>No se registran transacciones externas en la pasarela para este usuario.</p>";
             return;
         }
 
