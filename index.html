@@ -123,7 +123,6 @@
         </div>
     </div>
 
-
     <div id="main-app" class="app-container hidden">
 
         <aside class="sidebar">
@@ -175,6 +174,7 @@
                     <div class="card card-balance">
                         <span class="card-label">Balance Total Disponible</span>
                         <h2 class="balance-amount" id="dashboard-balance">Q0.00</h2>
+                        
                         <div class="card-chip-row">
                             <span class="account-number" id="numero-cuenta">**** ****</span>
                             <i class="fa-solid fa-credit-card chip-icon"></i>
@@ -194,147 +194,142 @@
                 </div>
 
                 <div class="quick-actions-section">
-                    <div class="grid-dashboard" style="grid-template-columns: 1fr 1fr; margin-bottom: 0; gap: 2rem;">
+                    <div class="grid-dashboard" style="grid-template-columns: 1fr 1fr; margin-bottom: 0;">
                         <div class="card">
                             <h3>Operaciones Inmediatas</h3>
-                            <p class="section-desc-soft">Añade saldo de forma directa a tus fondos de inversión.</p>
-                            
-                            <form id="form-deposit" style="margin-top: 1.5rem;">
-                                <div class="input-group">
-                                    <label>Monto de Capital a Depositar (Q)</label>
+                            <div class="quick-actions-grid" style="grid-template-columns: 1fr 1fr; margin-top: 1rem;">
+                                <button class="quick-btn" onclick="navigateToView('view-payments')">
+                                    <i class="fa-solid fa-receipt"></i>
+                                    <span>Liquidar Servicios</span>
+                                </button>
+                                <button class="quick-btn" onclick="navigateToView('view-transfers')">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                    <span>Transferir Fondos</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3>Depósito Inmediato de Fondos</h3>
+                            <form id="form-deposit" style="margin-top: 1rem;">
+                                <div class="input-group" style="margin-bottom: 1rem;">
+                                    <label>Monto Líquido a Depositar (Q)</label>
                                     <div class="input-wrapper">
                                         <i class="fa-solid fa-money-bill-trend-up"></i>
                                         <input type="number" step="0.01" id="deposit-amount" placeholder="0.00" required>
                                     </div>
                                 </div>
-                                <button type="submit" class="btn btn-emerald btn-full" style="margin-top: 1rem;">Liquidar Inyección</button>
+                                <button type="submit" class="btn btn-primary btn-full">Efectuar Depósito Bancario</button>
                             </form>
                         </div>
+                    </div>
+                </div>
 
-                        <div class="card">
-                            <h3>Auditoría de Movimientos Recientes</h3>
-                            <p class="section-desc-soft">Registro detallado cronológicamente.</p>
-                            
-                            <div class="table-container" style="margin-top: 1rem; max-height: 220px; overflow-y: auto;">
-                                <table class="table-premium">
-                                    <thead>
-                                        <tr>
-                                            <th>Operación / Concepto</th>
-                                            <th>Fecha</th>
-                                            <th class="text-right">Monto</th>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card" style="margin-top: 2rem; width: 100%;">
-                            <div class="table-container">
-                                <table class="table-premium">
-                                    <thead>
-                                        <tr>
-                                            <th>Operación / Concepto</th>
-                                            <th>Fecha</th>
-                                            <th class="text-right">Monto</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="transactions-log">
-                                        </tbody>
-                                </table>
-                            </div>
-                        </div>
-
+                <div class="card table-card-layout" style="margin-top: 2.5rem;">
+                    <h3>Movimientos de Capital Recientes</h3>
+                    <div class="table-responsive">
+                        <table class="premium-table">
+                            <thead>
+                                <tr>
+                                    <th>Concepto / Tipo de Operación</th>
+                                    <th>Fecha Ejecución</th>
+                                    <th class="text-right">Monto Líquido</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactions-log">
+                                </tbody>
+                        </table>
                     </div>
                 </div>
             </section>
 
             <section id="view-payments" class="app-view">
-                <div class="section-intro">
-                    <h2>Ecosistema Integrado de Pagos</h2>
-                    <p>Liquida tus obligaciones y servicios exclusivos desde una única pasarela de alto rendimiento.</p>
+                
+                <div id="payments-categories-view">
+                    <div class="section-intro">
+                        <h2>Liquidación Masiva de Servicios</h2>
+                        <p>Selecciona una categoría libre para gestionar tus pagos y suscripciones bancarias.</p>
+                    </div>
+
+                    <div class="services-interactive-grid">
+                        <div class="card service-tile sub-pay-tile" onclick="openEntertainmentSubPage()">
+                            <i class="fa-solid fa-film service-icon-premium netflix"></i>
+                            <h4>Servicios de Entretenimiento</h4>
+                            <p>Suscripciones de Streaming y Contenido Digital</p>
+                        </div>
+                        <div class="card service-tile" onclick="selectServiceTemplate('Teléfono')">
+                            <i class="fa-solid fa-mobile-screen service-icon-premium phone"></i>
+                            <h4>Telefonía & Datos Celulares</h4>
+                            <p>Planes Postpago Nacionales</p>
+                        </div>
+                        <div class="card service-tile" onclick="selectServiceTemplate('Donaciones')">
+                            <i class="fa-solid fa-heart-pulse service-icon-premium donations"></i>
+                            <h4>Donaciones Filantrópicas</h4>
+                            <p>Aportaciones de Impacto Global</p>
+                        </div>
+                    </div>
+
+                    <div class="card max-w-md" style="margin-top: 3rem;">
+                        <h3>Orden de Liquidación Estándar</h3>
+                        <form id="form-pago" style="margin-top: 1rem;">
+                            <div class="input-group">
+                                <label>Monto de Débito (Q)</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-solid fa-wallet"></i>
+                                    <input type="number" step="0.01" id="pago-monto" placeholder="0.00" required>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <label>Proveedor Homologado</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-solid fa-building-columns"></i>
+                                    <select id="pago-servicio" required>
+                                        <option value="" disabled selected>Seleccione un proveedor</option>
+                                        <option value="Netflix">Plataforma Streaming (Netflix)</option>
+                                        <option value="Teléfono">Telecomunicaciones Globales</option>
+                                        <option value="Donaciones">Fondo de RSE Comunitario</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-full">Autorizar Cargo a Cuenta</button>
+                        </form>
+                    </div>
                 </div>
 
-                <div id="payments-categories-view" class="categories-container animate-fade">
-                    <div class="category-card" onclick="openEntertainmentSubPage()">
-                        <div class="icon-box-premium"><i class="fa-solid fa-clapperboard"></i></div>
-                        <h3>Entretenimiento y Streaming</h3>
-                        <p>Netflix, Spotify, Prime Video y plataformas de difusión digital de alta gama.</p>
-                        <span class="action-trigger-text">Abrir Pasarela <i class="fa-solid fa-chevron-right"></i></span>
-                    </div>
-
-                    <div class="category-card item-disabled">
-                        <div class="icon-box-premium"><i class="fa-solid fa-bolt"></i></div>
-                        <h3>Servicios Públicos de Distribución</h3>
-                        <p>Luz, agua potable, energía térmica e infraestructura residencial básica.</p>
-                        <span class="action-trigger-text">Mantenimiento de Redes Externas</span>
-                    </div>
-
-                    <div class="category-card item-disabled">
-                        <div class="icon-box-premium"><i class="fa-solid fa-graduation-cap"></i></div>
-                        <h3>Aranceles Educativos y Colegiaturas</h3>
-                        <p>Universidades, escuelas globales de negocios y membresías corporativas internacionales.</p>
-                        <span class="action-trigger-text">Próxima Sincronización</span>
-                    </div>
-                </div>
-
-                <div id="payments-entertainment-view" class="sub-page-payments hidden animate-fade">
-                    <div class="sub-page-header">
-                        <button class="btn-back-premium" onclick="closeEntertainmentSubPage()">
-                            <i class="fa-solid fa-arrow-left"></i> Regresar a Categorías
+                <div id="payments-entertainment-view" class="hidden">
+                    <div class="section-intro" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h2>Pasarela Digital Aura — Streaming & Media</h2>
+                            <p>Adquiera vouchers o liquide licencias de sus cuentas multimedia externas.</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="closeEntertainmentSubPage()">
+                            <i class="fa-solid fa-arrow-left" style="margin-right: 8px;"></i> Regresar a Categorías
                         </button>
-                        <div style="margin-top:1rem;">
-                            <h3>Pasarela Externa: Categoría Entretenimiento</h3>
-                            <p class="section-desc-soft">Selecciona una de las licencias activas vinculadas para proceder con el cargo directo de capital.</p>
+                    </div>
+
+                    <div class="services-interactive-grid" style="margin-top: 2rem;">
+                        <div class="card service-tile sub-pay-tile" onclick="ejecutarPagoEntretenimiento(1, 'Netflix Premium')">
+                            <i class="fa-brands fa-netflix service-icon-premium" style="background-color: rgba(229,9,20,0.15); color: #e50914;"></i>
+                            <h4>Netflix Premium Individual</h4>
+                            <p>ID Servicio: 1</p>
+                        </div>
+                        <div class="card service-tile sub-pay-tile" onclick="ejecutarPagoEntretenimiento(2, 'Spotify Luxury')">
+                            <i class="fa-brands fa-spotify service-icon-premium" style="background-color: rgba(30,215,96,0.15); color: #1ed760;"></i>
+                            <h4>Spotify Luxury Pack</h4>
+                            <p>ID Servicio: 2</p>
+                        </div>
+                        <div class="card service-tile sub-pay-tile" onclick="ejecutarPagoEntretenimiento(3, 'Disney+ Combo')">
+                            <i class="fa-solid fa-wand-magic-sparkles service-icon-premium" style="background-color: rgba(0,99,229,0.15); color: #0063e5;"></i>
+                            <h4>Disney+ Combo Global</h4>
+                            <p>ID Servicio: 3</p>
                         </div>
                     </div>
 
-                    <div class="services-list-grid">
-                        <div class="sub-pay-tile">
-                            <div class="tile-brand-info">
-                                <i class="fa-brands fa-netflix brand-logo-icon" style="color: #e50914;"></i>
-                                <div>
-                                    <h4>Netflix Premium Individual</h4>
-                                    <p>Suscripción de Ultra Alta Definición 4K</p>
-                                </div>
-                            </div>
-                            <div class="tile-action-row">
-                                <span class="price-badge-premium">Q 139.00 / Mes</span>
-                                <button class="btn btn-primary" onclick="ejecutarPagoEntretenimiento(1, 'Netflix Premium')">Pagar Suscripción</button>
-                            </div>
-                        </div>
-
-                        <div class="sub-pay-tile">
-                            <div class="tile-brand-info">
-                                <i class="fa-brands fa-spotify brand-logo-icon" style="color: #1ed760;"></i>
-                                <div>
-                                    <h4>Spotify Luxury Family Pack</h4>
-                                    <p>Audio Hi-Fi sin compresión con cuentas vinculadas</p>
-                                </div>
-                            </div>
-                            <div class="tile-action-row">
-                                <span class="price-badge-premium">Q 79.99 / Mes</span>
-                                <button class="btn btn-primary" onclick="ejecutarPagoEntretenimiento(2, 'Spotify Luxury')">Pagar Suscripción</button>
-                            </div>
-                        </div>
-
-                        <div class="sub-pay-tile">
-                            <div class="tile-brand-info">
-                                <i class="fa-solid fa-wand-magic-sparkles brand-logo-icon" style="color: #0063e5;"></i>
-                                <div>
-                                    <h4>Disney+ Combo Global</h4>
-                                    <p>Acceso completo a catálogos mundiales asociados</p>
-                                </div>
-                            </div>
-                            <div class="tile-action-row">
-                                <span class="price-badge-premium">Q 95.50 / Mes</span>
-                                <button class="btn btn-primary" onclick="ejecutarPagoEntretenimiento(3, 'Disney+ Combo')">Pagar Suscripción</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="resultado-entretenimiento" class="card card-response-api" style="display: none; margin-top: 2rem;">
-                        </div>
+                    <div id="resultado-entretenimiento" class="card card-response-api" style="display: none; margin-top: 2rem;"></div
                 </div>
+
             </section>
 
             <section id="view-transfers" class="app-view">
