@@ -48,9 +48,6 @@ function setupEventListeners() {
 
     document.getElementById("form-transfer")?.addEventListener("submit", handleTransfer);
     document.getElementById("form-pago")?.addEventListener("submit", handlePago);
-    
-    // CORRECCIÓN: Se añade el escuchador para el formulario de depósito
-    document.getElementById("form-deposit")?.addEventListener("submit", handleDeposit);
 
     document.getElementById("btn-logout")?.addEventListener("click", logout);
 }
@@ -61,11 +58,15 @@ function setupEventListeners() {
 async function handleLogin(e) {
     e.preventDefault();
 
-    const dpi = document.getElementById("login-dpi").value;
-    const pass = document.getElementById("login-password").value;
+    const dpiEl = document.getElementById("login-dpi");
+    const passEl = document.getElementById("login-password");
+    if (!dpiEl || !passEl) return;
+
+    const dpi = dpiEl.value.trim();
+    const pass = passEl.value;
 
     try {
-        const res = await fetch(`${API}/api/Cliente/login?dpi=${dpi}&password=${pass}`, {
+        const res = await fetch(`${API}/api/Cliente/login?dpi=${encodeURIComponent(dpi)}&password=${encodeURIComponent(pass)}`, {
             method: "POST"
         });
 
@@ -78,6 +79,8 @@ async function handleLogin(e) {
         const resCuenta = await fetch(`${API}/api/Cuenta/crear?clienteId=${cliente.id}`, {
             method: "POST"
         });
+
+        if (!resCuenta.ok) throw new Error();
 
         const cuenta = await resCuenta.json();
         appState.cuentaId = cuenta.id;
@@ -97,12 +100,12 @@ async function handleLogin(e) {
 async function handleRegister(e) {
     e.preventDefault();
 
-    const nombre = document.getElementById("reg-name").value;
-    const dpi = document.getElementById("reg-dpi").value;
-    const correo = document.getElementById("reg-email").value;
-    const telefono = document.getElementById("reg-telefono").value;
-    const direccion = document.getElementById("reg-direccion").value;
-    const password = document.getElementById("reg-password").value;
+    const nombre = document.getElementById("reg-name")?.value || "";
+    const dpi = document.getElementById("reg-dpi")?.value || "";
+    const correo = document.getElementById("reg-email")?.value || "";
+    const telefono = document.getElementById("reg-telefono")?.value || "";
+    const direccion = document.getElementById("reg-direccion")?.value || "";
+    const password = document.getElementById("reg-password")?.value || "";
 
     try {
         const url = `${API}/api/Cliente/registro?nombre=${encodeURIComponent(nombre)}&dpi=${encodeURIComponent(dpi)}&correo=${encodeURIComponent(correo)}&telefono=${encodeURIComponent(telefono)}&direccion=${encodeURIComponent(direccion)}&password=${encodeURIComponent(password)}`;
@@ -111,7 +114,7 @@ async function handleRegister(e) {
         if (!res.ok) throw new Error();
 
         showToast("Cuenta creada correctamente ✅", "success");
-        document.getElementById("form-register").reset();
+        document.getElementById("form-register")?.reset();
         switchAuthForm("login");
 
     } catch (err) {
@@ -125,16 +128,15 @@ async function handleRegister(e) {
 async function handleRecover(e) {
     e.preventDefault();
     
-    const dpi = document.getElementById("recover-dpi").value;
-    const email = document.getElementById("recover-email").value;
+    const dpi = document.getElementById("recover-dpi")?.value || "";
+    const email = document.getElementById("recover-email")?.value || "";
 
     try {
-        // Ejecución simulada/protocolo con fallback limpio para la pasarela de recuperación de la API
         const url = `${API}/api/Cliente/recuperar?dpi=${encodeURIComponent(dpi)}&correo=${encodeURIComponent(email)}`;
         await fetch(url, { method: "POST" }).catch(() => console.log("Protocolo de recuperación enviado"));
 
         showToast("Token de restauración enviado al correo registrado", "success");
-        document.getElementById("form-recover").reset();
+        document.getElementById("form-recover")?.reset();
         switchAuthForm("login");
     } catch (err) {
         showToast("Error en la solicitud de recuperación", "error");
@@ -146,20 +148,27 @@ async function handleRecover(e) {
 // ========================================
 function switchAuthForm(tipo) {
     document.querySelectorAll(".auth-form").forEach(f => f.classList.remove("active"));
-    document.getElementById(`form-${tipo}`).classList.add("active");
+    document.getElementById(`form-${tipo}`)?.classList.add("active");
 }
 
 // ========================================
 // ENTRADA AL ENTORNO PRIVADO
 // ========================================
 function enterApp(cuenta) {
-    document.getElementById("auth-container").classList.add("hidden");
-    document.getElementById("main-app").classList.remove("hidden");
+    document.getElementById("auth-container")?.classList.add("hidden");
+    document.getElementById("main-app")?.classList.remove("hidden");
 
-    document.getElementById("user-display-name").innerText = appState.cliente.nombre || "Cliente";
-    document.getElementById("nombre-cliente").innerText = appState.cliente.nombre || "Cliente";
-    document.getElementById("numero-cuenta").innerText = cuenta.numeroTarjeta || cuenta.numeroCuenta || "Cta. Corporativa";
-    document.getElementById("cvv").innerText = cuenta.cvv || "992";
+    const userDisplayName = document.getElementById("user-display-name");
+    if (userDisplayName) userDisplayName.innerText = appState.cliente.nombre || "Cliente";
+
+    const nombreCliente = document.getElementById("nombre-cliente");
+    if (nombreCliente) nombreCliente.innerText = appState.cliente.nombre || "Cliente";
+
+    const numeroCuenta = document.getElementById("numero-cuenta");
+    if (numeroCuenta) numeroCuenta.innerText = cuenta.numeroTarjeta || cuenta.numeroCuenta || "Cta. Corporativa";
+
+    const cvv = document.getElementById("cvv");
+    if (cvv) cvv.innerText = cuenta.cvv || "992";
 
     cargarDatos();
 }
@@ -176,75 +185,18 @@ function cargarDatos() {
 // REFRESCAR SALDO FINANCIERO
 // ========================================
 async function actualizarSaldo() {
+    if (!appState.cuentaId) return;
     try {
         const res = await fetch(`${API}/api/Cuenta/saldo?cuentaId=${appState.cuentaId}`);
+        if (!res.ok) throw new Error();
         const data = await res.json();
 
         appState.saldo = data.saldo;
-        document.getElementById("dashboard-balance").innerText = "Q" + formatMoney(appState.saldo);
+        const balanceEl = document.getElementById("dashboard-balance");
+        if (balanceEl) balanceEl.innerText = "Q" + formatMoney(appState.saldo);
 
     } catch {
         showToast("Error al cargar saldo en tiempo real", "error");
-    }
-}
-
-// ========================================
-// CORRECCIÓN: PROCESAMIENTO DE DEPÓSITOS DE CAPITAL (PERSISTENCIA Y SINCRONIZACIÓN)
-// ========================================
-async function handleDeposit(e) {
-    e.preventDefault();
-    const montoInput = document.getElementById("deposit-amount");
-    if (!montoInput) return;
-
-    const monto = parseFloat(montoInput.value);
-
-    if (monto <= 0 || isNaN(monto)) {
-        showToast("Monto ingresado inválido", "error");
-        return;
-    }
-
-    try {
-        // Intentar guardar el depósito en el servidor para que persista al cerrar sesión
-        const res = await fetch(`${API}/api/Cuenta/depositar?cuentaId=${appState.cuentaId}&monto=${monto}`, {
-            method: "POST"
-        });
-
-        if (res.ok) {
-            showToast(`Depósito de Q${formatMoney(monto)} realizado con éxito ✅`, "success");
-            montoInput.value = "";
-            cargarDatos(); // Recarga saldo y movimientos actualizados desde el servidor
-            return;
-        }
-        throw new Error("Endpoint de depósito no disponible o no soportado");
-
-    } catch (err) {
-        console.warn("Error de conexión con la API de depósito. Aplicando respaldo de sesión local:", err);
-
-        // Respaldo (Fallback): Sincroniza la variable interna y el HTML para que deje operar al usuario en la sesión actual
-        appState.saldo += monto;
-        document.getElementById("dashboard-balance").innerText = "Q" + formatMoney(appState.saldo);
-
-        const nuevoMovimiento = {
-            tipo: "Depósito de Capital",
-            fecha: new Date().toISOString(),
-            monto: monto
-        };
-        appState.movimientos.unshift(nuevoMovimiento);
-
-        const tbody = document.getElementById("transactions-log");
-        if (tbody) {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td><strong>${nuevoMovimiento.tipo}</strong></td>
-                <td>${formatFecha(nuevoMovimiento.fecha)}</td>
-                <td class="text-right" style="font-weight:600; color: var(--accent-emerald);">Q${formatMoney(nuevoMovimiento.monto)}</td>
-            `;
-            tbody.insertBefore(tr, tbody.firstChild);
-        }
-
-        renderFinancialChart(appState.movimientos);
-        showToast(`Depósito de Q${formatMoney(monto)} aplicado localmente`, "success");
-        montoInput.value = "";
     }
 }
 
@@ -254,8 +206,13 @@ async function handleDeposit(e) {
 async function handleTransfer(e) {
     e.preventDefault();
 
-    const destino = document.getElementById("transfer-account").value;
-    const monto = parseFloat(document.getElementById("transfer-amount").value);
+    const destino = document.getElementById("transfer-account")?.value || "";
+    const monto = parseFloat(document.getElementById("transfer-amount")?.value || "0");
+
+    if (isNaN(monto) || monto <= 0) {
+        showToast("Ingrese un monto de transferencia válido", "error");
+        return;
+    }
 
     if (monto > appState.saldo) {
         showToast("Fondos disponibles insuficientes", "error");
@@ -263,14 +220,14 @@ async function handleTransfer(e) {
     }
 
     try {
-        const res = await fetch(`${API}/api/Banco/transferir?origenId=${appState.cuentaId}&destinoId=${destino}&monto=${monto}`, {
+        const res = await fetch(`${API}/api/Banco/transferir?origenId=${appState.cuentaId}&destinoId=${encodeURIComponent(destino)}&monto=${monto}`, {
             method: "POST"
         });
 
         if (!res.ok) throw new Error();
 
         showToast("Transferencia Realizada con Éxito ✅", "success");
-        document.getElementById("form-transfer").reset();
+        document.getElementById("form-transfer")?.reset();
         cargarDatos();
         navigateToView("view-dashboard");
 
@@ -285,8 +242,13 @@ async function handleTransfer(e) {
 async function handlePago(e) {
     e.preventDefault();
 
-    const monto = parseFloat(document.getElementById("pago-monto").value);
-    const servicio = document.getElementById("pago-servicio").value;
+    const monto = parseFloat(document.getElementById("pago-monto")?.value || "0");
+    const servicio = document.getElementById("pago-servicio")?.value || "";
+
+    if (isNaN(monto) || monto <= 0) {
+        showToast("Ingrese un monto de liquidación válido", "error");
+        return;
+    }
 
     if (monto > appState.saldo) {
         showToast("Fondos insuficientes para esta transacción", "error");
@@ -301,7 +263,7 @@ async function handlePago(e) {
         if (!res.ok) throw new Error();
 
         showToast(`Pago de servicio ${servicio} procesado ✅`, "success");
-        document.getElementById("form-pago").reset();
+        document.getElementById("form-pago")?.reset();
         cargarDatos();
         navigateToView("view-dashboard");
 
@@ -314,12 +276,15 @@ async function handlePago(e) {
 // RENDERIZADO DE TABLA Y GRÁFICO DINÁMICO
 // ========================================
 async function cargarMovimientos() {
+    if (!appState.cuentaId) return;
     try {
         const res = await fetch(`${API}/api/Movimiento?cuentaId=${appState.cuentaId}`);
+        if (!res.ok) throw new Error();
         const data = await res.json();
         appState.movimientos = data;
 
         const tbody = document.getElementById("transactions-log");
+        if (!tbody) return;
         tbody.innerHTML = "";
 
         data.forEach(m => {
@@ -353,8 +318,8 @@ function renderFinancialChart(movimientos) {
     }
 
     // Estructurar datos de movimientos o simular curva de rendimiento limpia
-    const labels = movimientos.length > 0 ? movimientos.map(m => formatFecha(m.fecha)).reverse() : ["Ene", "Feb", "Mar", "Abr", "May"];
-    const dataPoints = movimientos.length > 0 ? movimientos.map(m => m.monto).reverse() : [1200, 3400, 2100, 5600, appState.saldo];
+    const labels = movimientos && movimientos.length > 0 ? movimientos.map(m => formatFecha(m.fecha)).reverse() : ["Ene", "Feb", "Mar", "Abr", "May"];
+    const dataPoints = movimientos && movimientos.length > 0 ? movimientos.map(m => m.monto).reverse() : [1200, 3400, 2100, 5600, appState.saldo];
 
     const context2d = ctx.getContext('2d');
     const goldGradient = context2d.createLinearGradient(0, 0, 0, 150);
@@ -392,7 +357,7 @@ function renderFinancialChart(movimientos) {
 // Helper Interactivo para la sección rápida de pagos
 function selectServiceTemplate(serviceName) {
     const selectEl = document.getElementById("pago-servicio");
-    if(selectEl) {
+    if (selectEl) {
         selectEl.value = serviceName;
         showToast(`Proveedor ${serviceName} seleccionado.`, "normal");
     }
@@ -403,7 +368,8 @@ function selectServiceTemplate(serviceName) {
 // ========================================
 function navigateToView(viewId) {
     document.querySelectorAll(".app-view").forEach(v => v.classList.remove("active"));
-    document.getElementById(viewId).classList.add("active");
+    const viewEl = document.getElementById(viewId);
+    if (viewEl) viewEl.classList.add("active");
 
     document.querySelectorAll(".menu-item").forEach(i => i.classList.remove("active"));
     document.querySelector(`[data-target="${viewId}"]`)?.classList.add("active");
@@ -440,10 +406,10 @@ function logout() {
         financialChartInstance = null;
     }
 
-    document.getElementById("main-app").classList.add("hidden");
-    document.getElementById("auth-container").classList.remove("hidden");
+    document.getElementById("main-app")?.classList.add("hidden");
+    document.getElementById("auth-container")?.classList.remove("hidden");
     
-    document.getElementById("form-login").reset();
+    document.getElementById("form-login")?.reset();
     switchAuthForm("login");
 
     showToast("Sesión cerrada de manera segura ✅", "normal");
@@ -454,7 +420,7 @@ function logout() {
 // ========================================
 function showToast(msg, type = "normal") {
     const c = document.getElementById("toast-container");
-    if(!c) return;
+    if (!c) return;
 
     const t = document.createElement("div");
     t.className = `toast ${type}`;
