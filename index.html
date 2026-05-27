@@ -1,384 +1,292 @@
 ﻿<!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURA — Banca Privada Digital</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AURA — Banca Privada Digital</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
 
-    <div id=\"toast-container\" class=\"toast-container\"></div>
+<div id="toast-container" class="toast-container"></div>
 
-    <div id="auth-container" class="auth-container">
-        <div class="auth-card">
-            <div class="auth-header">
-                <div class="brand-logo">AURA</div>
-                <p class="brand-subtitle">BANCA PRIVADA</p>
-            </div>
+<div id="auth-container" class="auth-container">
+<div class="auth-card">
 
-            <form id="form-login" class="auth-form active">
-                <h2>Iniciar Sesión</h2>
-                <p class="form-desc">Introduce tus credenciales ejecutivas para acceder al ecosistema.</p>
+<div class="auth-header">
+<div class="brand-logo">AURA</div>
+<p class="brand-subtitle">BANCA PRIVADA</p>
+</div>
 
-                <div class="input-group">
-                    <label>Documento de Identidad (DPI)</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-id-card"></i>
-                        <input id="login-dpi" placeholder="Ingrese su DPI" required>
-                    </div>
-                </div>
+<form id="form-login" class="auth-form active">
+<h2>Bienvenido</h2>
 
-                <div class="input-group">
-                    <label>Contraseña de Acceso</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-lock"></i>
-                        <input type="password" id="login-password" placeholder="••••••••" required>
-                    </div>
-                </div>
+<div class="input-group">
+<label>DPI</label>
+<div class="input-wrapper">
+<i class="fa-solid fa-id-card"></i>
+<input id="login-dpi" required>
+</div>
+</div>
 
-                <button type="submit" class="btn btn-primary btn-full">Autenticar Cuenta</button>
-                
-                <div class="auth-footer">
-                    <a href="#" onclick="switchAuthForm('recover')">¿Olvidó sus credenciales?</a>
-                    <p>¿No tiene cuenta? <a href="#" onclick="switchAuthForm('register')">Regístrese aquí</a></p>
-                </div>
-            </form>
+<div class="input-group">
+<label>Password</label>
+<div class="input-wrapper">
+<i class="fa-solid fa-lock"></i>
+<input type="password" id="login-password" required>
+</div>
+</div>
 
-            <form id="form-register" class="auth-form">
-                <h2>Registro de Cliente</h2>
-                <p class="form-desc">Abra una cuenta en nuestra plataforma de banca privada digital.</p>
+<button class="btn btn-primary btn-full">Ingresar</button>
 
-                <div class="input-group">
-                    <label>Nombre Completo</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-user"></i>
-                        <input id="reg-name" placeholder="Ej. Carlos Mendoza" required>
-                    </div>
-                </div>
+<div class="auth-footer">
+<p>¿No tienes cuenta? <a href="#" onclick="switchAuthForm('register')">Regístrate</a></p>
+</div>
+</form>
 
-                <div class="input-group">
-                    <label>DPI (Código Único)</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-id-card"></i>
-                        <input id="reg-dpi" placeholder="13 dígitos del documento" required>
-                    </div>
-                </div>
+<form id="form-register" class="auth-form">
+<h2>Registro</h2>
 
-                <div class="input-group">
-                    <label>Correo Electrónico</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-envelope"></i>
-                        <input type="email" id="reg-email" placeholder="carlos@example.com" required>
-                    </div>
-                </div>
+<div class="input-group">
+<label>Nombre</label>
+<div class="input-wrapper">
+<input id="reg-name" required>
+</div>
+</div>
 
-                <div class="input-group">
-                    <label>Teléfono Celular</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-phone"></i>
-                        <input id="reg-telefono" placeholder="55554444" required>
-                    </div>
-                </div>
+<div class="input-group">
+<label>DPI</label>
+<div class="input-wrapper">
+<input id="reg-dpi" required>
+</div>
+</div>
 
-                <div class="input-group">
-                    <label>Dirección Residencial</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-location-dot"></i>
-                        <input id="reg-direccion" placeholder="Ciudad de Guatemala" required>
-                    </div>
-                </div>
+<div class="input-group">
+<label>Correo</label>
+<div class="input-wrapper">
+<input type="email" id="reg-email" required>
+</div>
+</div>
 
-                <div class="input-group">
-                    <label>Asignar Contraseña</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-lock"></i>
-                        <input type="password" id="reg-password" placeholder="Mínimo 6 caracteres" required>
-                    </div>
-                </div>
+<div class="input-group">
+<label>Teléfono</label>
+<div class="input-wrapper">
+<input id="reg-telefono" required>
+</div>
+</div>
 
-                <button type="submit" class="btn btn-primary btn-full">Crear Perfil Financiero</button>
-                <div class="auth-footer">
-                    <p>¿Ya es miembro? <a href="#" onclick="switchAuthForm('login')">Inicie Sesión</a></p>
-                </div>
-            </form>
+<div class="input-group">
+<label>Dirección</label>
+<div class="input-wrapper">
+<input id="reg-direccion" required>
+</div>
+</div>
 
-            <form id="form-recover" class="auth-form">
-                <h2>Restaurar Acceso</h2>
-                <p class="form-desc">Provea sus datos validados para solicitar un token de restauración.</p>
+<div class="input-group">
+<label>Password</label>
+<div class="input-wrapper">
+<input type="password" id="reg-password" required>
+</div>
+</div>
 
-                <div class="input-group">
-                    <label>DPI Registrado</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-id-card"></i>
-                        <input id="recover-dpi" placeholder="Ingrese su DPI" required>
-                    </div>
-                </div>
+<button class="btn btn-primary btn-full">Registrar</button>
+<div class="auth-footer">
+<p>¿Ya tienes cuenta? <a href="#" onclick="switchAuthForm('login')">Login</a></p>
+</div>
+</form>
 
-                <div class="input-group">
-                    <label>Correo Electrónico Corp.</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-envelope"></i>
-                        <input type="email" id="recover-email" placeholder="ejemplo@correo.com" required>
-                    </div>
-                </div>
+</div>
+</div>
 
-                <button type="submit" class="btn btn-primary btn-full">Generar Orden de Recuperación</button>
-                <div class="auth-footer">
-                    <a href="#" onclick="switchAuthForm('login')">Regresar al Login</a>
-                </div>
-            </form>
-        </div>
-    </div>
 
-    <div id="main-app" class="app-container hidden">
-        
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="brand-logo">AURA</div>
-                <span class="badge-premium">PRIVÉ</span>
-            </div>
+<div id="main-app" class="app-container hidden">
 
-            <nav class="sidebar-menu">
-                <a href="#" class="menu-item active" data-target="view-dashboard" onclick="navigateToView('view-dashboard')">
-                    <i class="fa-solid fa-chart-pie"></i> Posición Global
-                </a>
-                <a href="#" class="menu-item" data-target="view-deposit" onclick="navigateToView('view-deposit')">
-                    <i class="fa-solid fa-vault"></i> Inyección / Depósito
-                </a>
-                <a href="#" class="menu-item" data-target="view-transfers" onclick="navigateToView('view-transfers')">
-                    <i class="fa-solid fa-money-bill-transfer"></i> Transferencias
-                </a>
-                <a href="#" class="menu-item" data-target="view-payments" onclick="navigateToView('view-payments')">
-                    <i class="fa-solid fa-credit-card"></i> Liquidar Servicios
-                </a>
-            </nav>
+<aside class="sidebar">
+<div class="sidebar-header">
+<div class="brand-logo">AURA</div>
+<span class="badge-premium">PREMIUM</span>
+</div>
 
-            <div class="sidebar-footer">
-                <div class="user-brief">
-                    <i class="fa-solid fa-circle-user avatar-icon"></i>
-                    <div class="user-brief-info">
-                        <span id="user-display-name" class="user-name">Cargando...</span>
-                        <span class="user-status">Titular Acreditado</span>
-                    </div>
-                </div>
-                <button id="btn-logout" class="btn btn-logout btn-full">
-                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar Canal Seguro
-                </button>
-            </div>
-        </aside>
+<nav class="sidebar-menu">
+<a href="#" class="menu-item active" data-target="view-dashboard" onclick="navigateToView('view-dashboard')">
+<i class="fa-solid fa-chart-pie"></i> Posición Global
+</a>
+<a href="#" class="menu-item" data-target="view-deposit" onclick="navigateToView('view-deposit')">
+<i class="fa-solid fa-vault"></i> Depositar
+</a>
+<a href="#" class="menu-item" data-target="view-payments" onclick="navigateToView('view-payments')">
+<i class="fa-solid fa-credit-card"></i> Pagos
+</a>
+<a href="#" class="menu-item" data-target="view-transfers" onclick="navigateToView('view-transfers')">
+<i class="fa-solid fa-money-bill-transfer"></i> Transferencias
+</a>
+<a href="#" class="menu-item" data-target="view-history" onclick="navigateToView('view-history')">
+<i class="fa-solid fa-history"></i> Historial
+</a>
+<a href="#" class="menu-item" data-target="view-entertainment" onclick="navigateToView('view-entertainment')">
+<i class="fa-solid fa-tv"></i> Entretenimiento
+</a>
+</nav>
 
-        <main class="main-content">
-            
-            <section id="view-dashboard" class="app-view active">
-                <div class="section-intro">
-                    <h1 class="welcome-text"><span id="greeting">Bienvenido</span>, <span id="nombre-cliente">Socio</span></h1>
-                    <p class="section-subtitle">Estado analítico actual de sus activos liquidados.</p>
-                </div>
+<div class="sidebar-footer">
+<div class="user-brief">
+<div class="user-brief-info">
+<span id="user-display-name" class="user-name">Cliente</span>
+</div>
+</div>
+<button id="btn-logout" class="btn btn-logout btn-full">Cerrar Sesión</button>
+</div>
+</aside>
 
-                <div class="dashboard-grid">
-                    
-                    <div class="aura-card-premium">
-                        <div class="card-glass-layer"></div>
-                        <div class="card-inner-content">
-                            <div class="card-top">
-                                <span class="card-brand">AURA</span>
-                                <i class="fa-solid fa-bolt-lightning card-chip-icon"></i>
-                            </div>
-                            <div class="card-middle">
-                                <p class="label-muted">FONDO DISPONIBLE</p>
-                                <h2 id="dashboard-balance" class="premium-balance">Q0.00</h2>
-                            </div>
-                            <div class="card-bottom">
-                                <div class="card-number-block">
-                                    <span class="label-muted">NÚMERO DE CUENTA</span>
-                                    <p id="numero-cuenta" class="digits">•••• •••• •••• ••••</p>
-                                </div>
-                                <div class="card-cvv-block">
-                                    <span class="label-muted">CVV</span>
-                                    <p id="cvv" class="digits">•••</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+<main class="main-content">
 
-                    <div class="card chart-card">
-                        <h3>Rendimiento del Capital Histórico</h3>
-                        <div class="chart-container">
-                            <canvas id="analytics-chart"></canvas>
-                        </div>
-                    </div>
-                </div>
+<section id="view-dashboard" class="app-view active">
+<div class="section-intro">
+<h1 class="welcome-text"><span id="greeting">Hola</span>, <span id="nombre-cliente">Socio</span></h1>
+<p>Resumen de tus cuentas</p>
+</div>
 
-                <div class="card table-card" style="margin-top: 2rem;">
-                    <div class="table-header-action">
-                        <h3>Bitácora de Auditoría Transaccional</h3>
-                        <span class="badge-live"><span class="pulse-dot"></span> Sincronizado con BD</span>
-                    </div>
-                    
-                    <div class="table-responsive">
-                        <table class="premium-table">
-                            <thead>
-                                <tr>
-                                    <th>Operación Realizada</th>
-                                    <th>Fecha de Registro</th>
-                                    <th class="text-right">Monto Líquido</th>
-                                </tr>
-                            </thead>
-                            <tbody id="transactions-log">
-                                </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
+<div class="dashboard-grid">
+<div class="aura-card-premium">
+<div class="card-inner-content">
+<p class="label-muted">SALDO DISPONIBLE</p>
+<h2 id="dashboard-balance" class="premium-balance">Q0.00</h2>
+<p class="label-muted" style="margin-top:1rem;">NÚMERO DE CUENTA</p>
+<p id="numero-cuenta" class="digits">•••• ••••</p>
+<p class="label-muted" style="margin-top:0.5rem;">CVV</p>
+<p id="cvv" class="digits">•••</p>
+</div>
+</div>
+</div>
+</section>
 
-            <section id="view-deposit" class="app-view">
-                <div class="section-intro">
-                    <h2>Inyección Directa de Fondos</h2>
-                    <p>Incremente el capital de su cuenta de forma inmediata mediante nuestra pasarela centralizada.</p>
-                </div>
+<section id="view-deposit" class="app-view">
+<div class="section-intro">
+<h2>Depositar</h2>
+<p>Ingresa fondos a tu cuenta</p>
+</div>
 
-                <div class="card max-w-md">
-                    <form id="form-deposit">
-                        <div class="input-group">
-                            <label>Monto Líquido a Depositar (Q)</label>
-                            <div class="input-wrapper">
-                                <i class="fa-solid fa-money-bill-wave"></i>
-                                <input type="number" step="0.01" id="deposit-amount" placeholder="0.00" required>
-                            </div>
-                        </div>
+<div class="card max-w-md">
+<form id="form-deposit">
+<div class="input-group">
+<label>Monto a depositar</label>
+<div class="input-wrapper">
+<input type="number" step="0.01" id="deposit-amount" required>
+</div>
+</div>
+<button type="submit" class="btn btn-primary btn-full">Efectuar Depósito</button>
+</form>
+</div>
+</section>
 
-                        <button type="submit" class="btn btn-primary btn-full">Efectuar Depósito Bancario</button>
-                    </form>
-                </div>
-            </section>
+<section id="view-payments" class="app-view">
+<div class="section-intro">
+<h2>Pagos</h2>
+<p>Gestión de servicios</p>
+</div>
 
-            <section id="view-payments" class="app-view">
-                
-                <div id="payments-categories-view">
-                    <div class="section-intro">
-                        <h2>Pasarela Temática de Pagos</h2>
-                        <p>Liquide saldos corrientes o acceda a integraciones de plataformas externas de entretenimiento.</p>
-                    </div>
+<div class="card max-w-md">
+<form id="form-pago">
+<div class="input-group">
+<label>Monto</label>
+<div class="input-wrapper">
+<input type="number" step="0.01" id="pago-monto" required>
+</div>
+</div>
 
-                    <div class="services-grid" style="margin-bottom: 2rem;">
-                        <div class="service-tile sub-pay-tile" onclick="openEntertainmentSubPage()">
-                            <i class="fa-solid fa-tv tile-icon" style="color: #ef4444;"></i>
-                            <h4>Entretenimiento Premium</h4>
-                            <p>Gestión de Streaming externo</p>
-                        </div>
-                        <div class="service-tile" onclick="selectServiceTemplate('Teléfono')">
-                            <i class="fa-solid fa-mobile-screen tile-icon" style="color: #3b82f6;"></i>
-                            <h4>Telecomunicaciones</h4>
-                            <p>Telefonía y Redes Corporativas</p>
-                        </div>
-                        <div class="service-tile" onclick="selectServiceTemplate('Donaciones')">
-                            <i class="fa-solid fa-hand-holding-heart tile-icon" style="color: #10b981;"></i>
-                            <h4>Donaciones / RSE</h4>
-                            <p>Fondeo filantrópico directo</p>
-                        </div>
-                    </div>
+<div class="input-group">
+<label>Servicio</label>
+<div class="input-wrapper">
+<select id="pago-servicio" required>
+<option value="Netflix">Netflix</option>
+<option value="Teléfono">Teléfono</option>
+<option value="Donaciones">Donaciones</option>
+</select>
+</div>
+</div>
+<button type="submit" class="btn btn-primary btn-full">Pagar</button>
+</form>
+</div>
+</section>
 
-                    <div class="card max-w-md">
-                        <h3>Orden de Liquidación Estándar</h3>
-                        <form id="form-pago" style="margin-top: 1rem;">
-                            <div class="input-group">
-                                <label>Monto de Débito (Q)</label>
-                                <div class="input-wrapper">
-                                    <i class="fa-solid fa-wallet"></i>
-                                    <input type="number" step="0.01" id="pago-monto" placeholder="0.00" required>
-                                </div>
-                            </div>
+<section id="view-transfers" class="app-view">
+<div class="section-intro">
+<h2>Transferencias</h2>
+</div>
 
-                            <div class="input-group">
-                                <label>Proveedor Homologado</label>
-                                <div class="input-wrapper">
-                                    <i class="fa-solid fa-building-columns"></i>
-                                    <select id="pago-servicio" required>
-                                        <option value="Netflix">Plataforma Streaming (Netflix)</option>
-                                        <option value="Teléfono">Telecomunicaciones Globales</option>
-                                        <option value="Donaciones">Fondo de RSE Comunitario</option>
-                                    </select>
-                                </div>
-                            </div>
+<div class="card max-w-md">
+<form id="form-transfer">
+<div class="input-group">
+<label>Cuenta Destino</label>
+<div class="input-wrapper">
+<input id="transfer-account" required>
+</div>
+</div>
 
-                            <button type="submit" class="btn btn-primary btn-full">Autorizar Cargo a Cuenta</button>
-                        </form>
-                    </div>
-                </div>
+<div class="input-group">
+<label>Monto</label>
+<div class="input-wrapper">
+<input type="number" step="0.01" id="transfer-amount" required>
+</div>
+</div>
+<button type="submit" class="btn btn-primary btn-full">Transferir</button>
+</form>
+</div>
+</section>
 
-                <div id="payments-entertainment-view" class="hidden">
-                    <div class="section-intro">
-                        <button class="btn-back" onclick="closeEntertainmentSubPage()">
-                            <i class="fa-solid fa-arrow-left"></i> Volver a Categorías
-                        </button>
-                        <h2 style="margin-top: 1rem;">Pasarela Digital Aura — Streaming & Media</h2>
-                        <p>Adquiera vouchers o liquide deudas operativas de sus cuentas de consumo multimedia.</p>
-                    </div>
+<section id="view-history" class="app-view">
+<div class="section-intro">
+<h2>Historial de Movimientos</h2>
+</div>
+<div class="card table-card">
+<div class="table-responsive">
+<table class="premium-table">
+<thead>
+<tr>
+<th>Tipo</th>
+<th>Fecha</th>
+<th class="text-right">Monto</th>
+</tr>
+</thead>
+<tbody id="transactions-log"></tbody>
+</table>
+</div>
+</div>
+</section>
 
-                    <div class="services-grid">
-                        <div class="service-tile" onclick="ejecutarPagoEntretenimiento(1, 'Netflix')">
-                            <i class="fa-brands fa-netflix tile-icon" style="color: #e50914;"></i>
-                            <h4>Netflix Premium</h4>
-                            <p>Cargos mensuales y licencias 4K</p>
-                        </div>
-                        <div class="service-tile" onclick="ejecutarPagoEntretenimiento(2, 'HBO Max')">
-                            <i class="fa-solid fa-play tile-icon" style="color: #581c87;"></i>
-                            <h4>Max (HBO)</h4>
-                            <p>Suscripción de catálogo extendido</p>
-                        </div>
-                        <div class="service-tile" onclick="ejecutarPagoEntretenimiento(3, 'Paramount+')">
-                            <i class="fa-solid fa-clapperboard tile-icon" style="color: #0064ff;"></i>
-                            <h4>Paramount Global</h4>
-                            <p>Canal de transmisión premium</p>
-                        </div>
-                    </div>
+<section id="view-entertainment" class="app-view">
+<div class="section-intro">
+<h2>Entretenimiento APIS Externas</h2>
+<p>Interconexión con plataformas multimedia externas</p>
+</div>
 
-                    <div style="margin-top: 2rem;">
-                        <button class="btn btn-secondary" onclick="obtenerHistorialEntretenimiento()">
-                            <i class="fa-solid fa-clock-rotate-left"></i> Auditar Pagos de Entretenimiento en la Base de Datos
-                        </button>
-                    </div>
+<div class="services-grid" style="margin-bottom: 2rem;">
+<div class="service-tile" onclick="ejecutarPagoEntretenimiento(1, 'Netflix')">
+<i class="fa-brands fa-netflix tile-icon" style="color: #e50914;"></i>
+<h4>Netflix</h4>
+</div>
+<div class="service-tile" onclick="ejecutarPagoEntretenimiento(2, 'HBO Max')">
+<i class="fa-solid fa-play tile-icon" style="color: #581c87;"></i>
+<h4>HBO Max</h4>
+</div>
+<div class="service-tile" onclick="ejecutarPagoEntretenimiento(3, 'Paramount+')">
+<i class="fa-solid fa-clapperboard tile-icon" style="color: #0064ff;"></i>
+<h4>Paramount+</h4>
+</div>
+</div>
 
-                    <div id="resultado-entretenimiento" class="card dynamic-result-card" style="margin-top: 1.5rem; display: none;"></div>
-                </div>
+<button class="btn btn-secondary" onclick="obtenerHistorialEntretenimiento()">Consultar API Entretenimiento</button>
 
-            </section>
+<div id="resultado-entretenimiento" class="card" style="margin-top:1.5rem; display:none;"></div>
+</section>
 
-            <section id="view-transfers" class="app-view">
-                <div class="section-intro">
-                    <h2>Transferencias Seguras Interbancarias</h2>
-                    <p>Mueve capital instantáneamente hacia cuentas del mismo ecosistema o entidades externas.</p>
-                </div>
+</main>
+</div>
 
-                <div class="card max-w-md">
-                    <form id="form-transfer">
-                        <div class="input-group">
-                            <label>Identificador de Cuenta Destino (ID)</label>
-                            <div class="input-wrapper">
-                                <i class="fa-solid fa-arrow-right-to-bracket"></i>
-                                <input id="transfer-account" placeholder="Ej. 104032" required>
-                            </div>
-                        </div>
-
-                        <div class="input-group">
-                            <label>Monto de Capital a Transferir (Q)</label>
-                            <div class="input-wrapper">
-                                <i class="fa-solid fa-dollar-sign"></i>
-                                <input type="number" step="0.01" id="transfer-amount" placeholder="0.00" required>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary btn-full">Ejecutar Transferencia Estratégica</button>
-                    </form>
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <script src="app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
