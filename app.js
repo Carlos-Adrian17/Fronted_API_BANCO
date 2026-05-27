@@ -344,7 +344,7 @@ async function obtenerHistorialEntretenimiento() {
         const data = await response.json();
 
         // ✅ CORRECCIÓN: FILTRAR SOLO PAGOS DEL USUARIO ACTUAL
-        const dataFiltrado = data.filter(pago => pago.usuarioBancoId == appState.cliente.id);
+        const dataFiltrado = data.filter(pago => pago.usuarioBancoId == appState.cuentaId);
 
         // ✅ VALIDACIÓN CORREGIDA
         if (!dataFiltrado || dataFiltrado.length === 0) {
