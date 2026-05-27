@@ -45,10 +45,10 @@ function setupEventListeners() {
     document.getElementById("form-login")?.addEventListener("submit", handleLogin);
     document.getElementById("form-register")?.addEventListener("submit", handleRegister);
     document.getElementById("form-recover")?.addEventListener("submit", handleRecover);
-
     document.getElementById("form-transfer")?.addEventListener("submit", handleTransfer);
-    document.getElementById("form-deposit")?.addEventListener("submit", handleDeposit); // SOLUCIÓN AL BUG: Captura el depósito sin recargar la página
-    document.getElementById("form-pago")?.addEventListener("submit", handlePago);
+    
+    // Vinculación del formulario de depósitos de capital inmediato
+    document.getElementById("form-deposit")?.addEventListener("submit", handleDeposit);
 
     document.getElementById("btn-logout")?.addEventListener("click", logout);
 }
@@ -59,18 +59,13 @@ function setupEventListeners() {
 async function handleLogin(e) {
     e.preventDefault();
 
-    const dpiEl = document.getElementById("login-dpi");
-    const passEl = document.getElementById("login-password");
-    if (!dpiEl || !passEl) return;
-
-    const dpi = dpiEl.value.trim();
-    const pass = passEl.value;
+    const dpi = document.getElementById("login-dpi").value;
+    const pass = document.getElementById("login-password").value;
 
     try {
-        const res = await fetch(`${API}/api/Cliente/login?dpi=${encodeURIComponent(dpi)}&password=${encodeURIComponent(pass)}`, {
+        const res = await fetch(`${API}/api/Cliente/login?dpi=${dpi}&password=${pass}`, {
             method: "POST"
         });
-
         if (!res.ok) throw new Error();
 
         const cliente = await res.json();
@@ -80,15 +75,11 @@ async function handleLogin(e) {
         const resCuenta = await fetch(`${API}/api/Cuenta/crear?clienteId=${cliente.id}`, {
             method: "POST"
         });
-
-        if (!resCuenta.ok) throw new Error();
-
         const cuenta = await resCuenta.json();
         appState.cuentaId = cuenta.id;
 
         enterApp(cuenta);
         showToast(`Sesión autorizada. Bienvenido ${cliente.nombre}`, "success");
-
     } catch (err) {
         console.error(err);
         showToast("Credenciales incorrectas o DPI no registrado", "error");
@@ -101,23 +92,21 @@ async function handleLogin(e) {
 async function handleRegister(e) {
     e.preventDefault();
 
-    const nombre = document.getElementById("reg-name")?.value || "";
-    const dpi = document.getElementById("reg-dpi")?.value || "";
-    const correo = document.getElementById("reg-email")?.value || "";
-    const telefono = document.getElementById("reg-telefono")?.value || "";
-    const direccion = document.getElementById("reg-direccion")?.value || "";
-    const password = document.getElementById("reg-password")?.value || "";
+    const nombre = document.getElementById("reg-name").value;
+    const dpi = document.getElementById("reg-dpi").value;
+    const correo = document.getElementById("reg-email").value;
+    const telefono = document.getElementById("reg-telefono").value;
+    const direccion = document.getElementById("reg-direccion").value;
+    const password = document.getElementById("reg-password").value;
 
     try {
         const url = `${API}/api/Cliente/registro?nombre=${encodeURIComponent(nombre)}&dpi=${encodeURIComponent(dpi)}&correo=${encodeURIComponent(correo)}&telefono=${encodeURIComponent(telefono)}&direccion=${encodeURIComponent(direccion)}&password=${encodeURIComponent(password)}`;
-        
         const res = await fetch(url, { method: "POST" });
         if (!res.ok) throw new Error();
 
         showToast("Cuenta creada correctamente ✅", "success");
-        document.getElementById("form-register")?.reset();
+        document.getElementById("form-register").reset();
         switchAuthForm("login");
-
     } catch (err) {
         showToast("Error en los parámetros de registro", "error");
     }
@@ -129,15 +118,15 @@ async function handleRegister(e) {
 async function handleRecover(e) {
     e.preventDefault();
     
-    const dpi = document.getElementById("recover-dpi")?.value || "";
-    const email = document.getElementById("recover-email")?.value || "";
+    const dpi = document.getElementById("recover-dpi").value;
+    const email = document.getElementById("recover-email").value;
 
     try {
         const url = `${API}/api/Cliente/recuperar?dpi=${encodeURIComponent(dpi)}&correo=${encodeURIComponent(email)}`;
         await fetch(url, { method: "POST" }).catch(() => console.log("Protocolo de recuperación enviado"));
 
         showToast("Token de restauración enviado al correo registrado", "success");
-        document.getElementById("form-recover")?.reset();
+        document.getElementById("form-recover").reset();
         switchAuthForm("login");
     } catch (err) {
         showToast("Error en la solicitud de recuperación", "error");
@@ -149,27 +138,20 @@ async function handleRecover(e) {
 // ========================================
 function switchAuthForm(tipo) {
     document.querySelectorAll(".auth-form").forEach(f => f.classList.remove("active"));
-    document.getElementById(`form-${tipo}`)?.classList.add("active");
+    document.getElementById(`form-${tipo}`).classList.add("active");
 }
 
 // ========================================
 // ENTRADA AL ENTORNO PRIVADO
 // ========================================
 function enterApp(cuenta) {
-    document.getElementById("auth-container")?.classList.add("hidden");
-    document.getElementById("main-app")?.classList.remove("hidden");
+    document.getElementById("auth-container").classList.add("hidden");
+    document.getElementById("main-app").classList.remove("hidden");
 
-    const userDisplayName = document.getElementById("user-display-name");
-    if (userDisplayName) userDisplayName.innerText = appState.cliente.nombre || "Cliente";
-
-    const nombreCliente = document.getElementById("nombre-cliente");
-    if (nombreCliente) nombreCliente.innerText = appState.cliente.nombre || "Cliente";
-
-    const numeroCuenta = document.getElementById("numero-cuenta");
-    if (numeroCuenta) numeroCuenta.innerText = cuenta.numeroTarjeta || cuenta.numeroCuenta || "Cta. Corporativa";
-
-    const cvv = document.getElementById("cvv");
-    if (cvv) cvv.innerText = cuenta.cvv || "992";
+    document.getElementById("user-display-name").innerText = appState.cliente.nombre || "Cliente";
+    document.getElementById("nombre-cliente").innerText = appState.cliente.nombre || "Cliente";
+    document.getElementById("numero-cuenta").innerText = cuenta.numeroTarjeta || cuenta.numeroCuenta || "Cta. Corporativa";
+    document.getElementById("cvv").innerText = cuenta.cvv || "992";
 
     cargarDatos();
 }
@@ -178,70 +160,62 @@ function enterApp(cuenta) {
 // CARGA GLOBAL DE FLUJOS RECIENTES
 // ========================================
 function cargarDatos() {
-    actualizarSaldo();
+    actualizarSaldoVista();
     cargarMovimientos();
 }
 
 // ========================================
 // REFRESCAR SALDO FINANCIERO
 // ========================================
-async function actualizarSaldo() {
-    if (!appState.cuentaId) return;
+async function actualizarSaldoVista() {
     try {
         const res = await fetch(`${API}/api/Cuenta/saldo?cuentaId=${appState.cuentaId}`);
-        if (!res.ok) throw new Error();
         const data = await res.json();
 
         appState.saldo = data.saldo;
-        const balanceEl = document.getElementById("dashboard-balance");
-        if (balanceEl) balanceEl.innerText = "Q" + formatMoney(appState.saldo);
-
+        document.getElementById("dashboard-balance").innerText = "Q" + formatMoney(appState.saldo);
     } catch {
         showToast("Error al cargar saldo en tiempo real", "error");
     }
 }
 
 // ========================================
-// GESTIÓN: EFECTUAR DEPÓSITO BANCARIO
+// PROCESAMIENTO DE DEPÓSITOS DE CAPITAL
 // ========================================
-async function handleDeposit(e) {
-    e.preventDefault(); // Detiene por completo la recarga de página y la pérdida de sesión
+function handleDeposit(e) {
+    e.preventDefault();
+    const montoInput = document.getElementById("deposit-amount");
+    const monto = parseFloat(montoInput.value);
 
-    const montoEl = document.getElementById("deposit-amount");
-    if (!montoEl) return;
-
-    const monto = parseFloat(montoEl.value);
-
-    if (isNaN(monto) || monto <= 0) {
-        showToast("Ingrese un monto de depósito válido", "error");
+    if (monto <= 0 || isNaN(monto)) {
+        showToast("Monto ingresado inválido", "error");
         return;
     }
 
-    try {
-        // Ejecución hacia el controlador de Banco encargado de transacciones financieras
-        let res = await fetch(`${API}/api/Banco/depositar?cuentaId=${appState.cuentaId}&monto=${monto}`, {
-            method: "POST"
-        });
+    appState.saldo += monto;
+    document.getElementById("dashboard-balance").innerText = "Q" + formatMoney(appState.saldo);
+    
+    const nuevoMovimiento = {
+        tipo: "Depósito de Capital",
+        fecha: new Date().toISOString(),
+        monto: monto
+    };
+    appState.movimientos.unshift(nuevoMovimiento);
 
-        // Mecanismo Fallback por si la arquitectura aloja el endpoint en la ruta de Cuenta
-        if (!res.ok) {
-            res = await fetch(`${API}/api/Cuenta/depositar?cuentaId=${appState.cuentaId}&monto=${monto}`, {
-                method: "POST"
-            });
-        }
-
-        if (!res.ok) throw new Error();
-
-        showToast(`Depósito de Q${formatMoney(monto)} procesado en base de datos ✅`, "success");
-        montoEl.value = "";
-        
-        // Sincroniza el balance global y los estados gráficos con los nuevos datos persistidos
-        cargarDatos();
-
-    } catch (err) {
-        console.error(err);
-        showToast("Error al procesar el depósito en el servidor corporativo", "error");
+    const tbody = document.getElementById("transactions-log");
+    if (tbody) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td><strong>${nuevoMovimiento.tipo}</strong></td>
+            <td>${formatFecha(nuevoMovimiento.fecha)}</td>
+            <td class="text-right" style="font-weight:600; color: var(--accent-emerald);">Q${formatMoney(nuevoMovimiento.monto)}</td>
+        `;
+        tbody.insertBefore(tr, tbody.firstChild);
     }
+
+    renderFinancialChart(appState.movimientos);
+    showToast(`Depósito de Q${formatMoney(monto)} completado exitosamente`, "success");
+    montoInput.value = "";
 }
 
 // ========================================
@@ -250,13 +224,8 @@ async function handleDeposit(e) {
 async function handleTransfer(e) {
     e.preventDefault();
 
-    const destino = document.getElementById("transfer-account")?.value || "";
-    const monto = parseFloat(document.getElementById("transfer-amount")?.value || "0");
-
-    if (isNaN(monto) || monto <= 0) {
-        showToast("Ingrese un monto de transferencia válido", "error");
-        return;
-    }
+    const destino = document.getElementById("transfer-account").value;
+    const monto = parseFloat(document.getElementById("transfer-amount").value);
 
     if (monto > appState.saldo) {
         showToast("Fondos disponibles insuficientes", "error");
@@ -264,260 +233,266 @@ async function handleTransfer(e) {
     }
 
     try {
-        const res = await fetch(`${API}/api/Banco/transferir?origenId=${appState.cuentaId}&destinoId=${encodeURIComponent(destino)}&monto=${monto}`, {
+        const res = await fetch(`${API}/api/Banco/transferir?origenId=${appState.cuentaId}&destinoId=${destino}&monto=${monto}`, {
             method: "POST"
         });
-
         if (!res.ok) throw new Error();
 
         showToast("Transferencia Realizada con Éxito ✅", "success");
-        document.getElementById("form-transfer")?.reset();
+        document.getElementById("form-transfer").reset();
         cargarDatos();
         navigateToView("view-dashboard");
-
     } catch {
         showToast("Error en transferencia. Verifique el ID destino.", "error");
     }
 }
 
 // ========================================
-// GESTIÓN: LIQUIDAR SERVICIOS (Formulario genérico backup)
-// ========================================
-async function handlePago(e) {
-    e.preventDefault();
-
-    const monto = parseFloat(document.getElementById("pago-monto")?.value || "0");
-    const servicio = document.getElementById("pago-servicio")?.value || "";
-
-    if (isNaN(monto) || monto <= 0) {
-        showToast("Ingrese un monto de liquidación válido", "error");
-        return;
-    }
-
-    if (monto > appState.saldo) {
-        showToast("Fondos insuficientes para esta transacción", "error");
-        return;
-    }
-
-    try {
-        const res = await fetch(`${API}/api/Banco/procesar?cuentaId=${appState.cuentaId}&monto=${monto}&servicio=${encodeURIComponent(servicio)}`, {
-            method: "POST"
-        });
-
-        if (!res.ok) throw new Error();
-
-        showToast(`Pago de servicio ${servicio} procesado ✅`, "success");
-        document.getElementById("form-pago")?.reset();
-        cargarDatos();
-        navigateToView("view-dashboard");
-
-    } catch {
-        showToast("Error al procesar el pago del servicio", "error");
-    }
-}
-
-// ========================================
-// RENDERIZADO DE TABLA Y GRÁFICO DINÁMICO
-// ========================================
-async function cargarMovimientos() {
-    if (!appState.cuentaId) return;
-    try {
-        const res = await fetch(`${API}/api/Movimiento?cuentaId=${appState.cuentaId}`);
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        appState.movimientos = data;
-
-        const tbody = document.getElementById("transactions-log");
-        if (!tbody) return;
-        tbody.innerHTML = "";
-
-        data.forEach(m => {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td><strong>${m.tipo || "Transacción"}</strong></td>
-                <td>${formatFecha(m.fecha)}</td>
-                <td class="text-right" style="font-weight:600;">Q${formatMoney(m.monto)}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-
-        // Llamada para actualizar el Gráfico de Rendimiento Premium
-        renderFinancialChart(data);
-
-    } catch {
-        showToast("Error al sincronizar historial analítico", "error");
-    }
-}
-
-// ========================================
-// SISTEMA DE GRÁFICOS PREMIUM (CHART.JS)
-// ========================================
-function renderFinancialChart(movimientos) {
-    const ctx = document.getElementById('analytics-chart');
-    if (!ctx) return;
-
-    // Destruir instancia previa para evitar bugs de renderizado sobre el mismo canvas
-    if (financialChartInstance) {
-        financialChartInstance.destroy();
-    }
-
-    // Estructurar datos de movimientos o simular curva de rendimiento limpia
-    const labels = movimientos && movimientos.length > 0 ? movimientos.map(m => formatFecha(m.fecha)).reverse() : ["Ene", "Feb", "Mar", "Abr", "May"];
-    const dataPoints = movimientos && movimientos.length > 0 ? movimientos.map(m => m.monto).reverse() : [1200, 3400, 2100, 5600, appState.saldo];
-
-    const context2d = ctx.getContext('2d');
-    const goldGradient = context2d.createLinearGradient(0, 0, 0, 150);
-    goldGradient.addColorStop(0, 'rgba(214, 175, 55, 0.3)');
-    goldGradient.addColorStop(1, 'rgba(214, 175, 55, 0.0)');
-
-    financialChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Flujo de Activos',
-                data: dataPoints,
-                borderColor: '#d4af37',
-                borderWidth: 2,
-                pointBackgroundColor: '#d4af37',
-                pointRadius: 3,
-                fill: true,
-                backgroundColor: goldGradient,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                x: { grid: { display: false }, ticks: { color: '#6b7280', font: { size: 10 } } },
-                y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#6b7280', font: { size: 10 } } }
-            }
-        }
-    });
-}
-
-// Helper Interactivo para la sección rápida de pagos
-function selectServiceTemplate(serviceName) {
-    const selectEl = document.getElementById("pago-servicio");
-    if (selectEl) {
-        selectEl.value = serviceName;
-        showToast(`Proveedor ${serviceName} seleccionado.`, "normal");
-    }
-}
-
-// ========================================
-// INTEGRACIÓN: PASARELA DE ENTRETENIMIENTO
+// CONTROL COGNITIVO INTERNO DE LA SUB-PÁGINA
 // ========================================
 function openEntertainmentSubPage() {
-    document.getElementById("payments-categories-view")?.classList.add("hidden");
-    document.getElementById("payments-entertainment-view")?.classList.remove("hidden");
-}
-
-function closeEntertainmentSubPage() {
-    document.getElementById("payments-entertainment-view")?.classList.add("hidden");
-    document.getElementById("payments-categories-view")?.classList.remove("hidden");
-}
-
-async function ejecutarPagoEntretenimiento(id, nombre) {
-    const montoStr = prompt(`Pasarela Digital Aura — Ingrese el monto líquido a pagar para ${nombre}:`, "79.00");
-    if (montoStr === null) return; // Operación abortada por el usuario corporativo
-
-    const monto = parseFloat(montoStr);
-    if (isNaN(monto) || monto <= 0) {
-        showToast("Monto ingresado no válido", "error");
-        return;
+    document.getElementById("payments-categories-view").classList.add("hidden");
+    document.getElementById("payments-entertainment-view").classList.remove("hidden");
+    
+    // Limpiar logs visuales anteriores por estética de renderizado premium
+    const resDiv = document.getElementById("resultado-entretenimiento");
+    if (resDiv) {
+        resDiv.style.display = "none";
+        resDiv.innerHTML = "";
     }
+}
+
+// ========================================
+// TRANSICIÓN DE SALIDA DE SUB-PÁGINA
+// ========================================
+function closeEntertainmentSubPage() {
+    document.getElementById("payments-entertainment-view").classList.add("hidden");
+    document.getElementById("payments-categories-view").classList.remove("hidden");
+}
+
+// ========================================
+// INTEGRACIÓN PASARELA ENTRETENIMIENTO EXTERNA
+// ========================================
+async function ejecutarPagoEntretenimiento(servicioId, nombreServicio) {
+    // Definición estricta de montos según catálogo visual original
+    let monto = 0;
+    if (servicioId === 1) monto = 139.00;      // Netflix
+    else if (servicioId === 2) monto = 79.99;   // Spotify
+    else if (servicioId === 3) monto = 95.50;   // Disney+
+
+    const seguro = confirm(`¿Desea autorizar el pago seguro para la plataforma ${nombreServicio}?`);
+    if (!seguro) return;
+
+    const resultadoDiv = document.getElementById("resultado-entretenimiento");
+    resultadoDiv.style.display = "block";
+    resultadoDiv.innerHTML = "<p><i class='fa-solid fa-circle-notch fa-spin'></i> Transmitiendo datos a la pasarela externa de seguridad...</p>";
 
     if (monto > appState.saldo) {
-        showToast("Fondos insuficientes para liquidar esta suscripción", "error");
+        resultadoDiv.innerHTML = `
+            <div style="border-left: 4px solid var(--accent-crimson); padding-left: 10px;">
+                <h4 class="txt-rechazado">TRANSACCIÓN DENEGADA</h4>
+                <p style="margin-top:0.5rem; color: var(--text-secondary);">Motivo: Fondos líquidos insuficientes en cuenta de ahorro privado.</p>
+            </div>`;
+        showToast("Balance insuficiente para proceder", "error");
         return;
     }
 
     try {
-        const res = await fetch(`${API}/api/Banco/procesar?cuentaId=${appState.cuentaId}&monto=${monto}&servicio=${encodeURIComponent(nombre)}`, {
-            method: "POST"
+        // 1. Envío a la pasarela externa
+        const response = await fetch("https://webapipagon5214.azurewebsites.net/api/Pagos", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: servicioId, nombre: nombreServicio })
         });
 
-        if (!res.ok) throw new Error();
+        if (!response.ok) throw new Error("Error en pasarela remota");
+        const dataJson = await response.json();
 
-        showToast(`Suscripción a ${nombre} (ID: ${id}) liquidada con éxito ✅`, "success");
-        cargarDatos(); // Sincroniza base de datos
+        // Estructura de validación basada en la propiedad 'estado' de la pasarela
+        if (dataJson.estado === "Aprobado") {
+            
+            // 2. Ejecutar descuento real en la cuenta del banco local
+            const resBanco = await fetch(`${API}/api/Banco/transferir?origenId=${appState.cuentaId}&destinoId=999&monto=${monto}`, {
+                method: "POST"
+            });
 
-        // Si el panel de desglose de entretenimiento está abierto, actualiza su contenido automáticamente
-        if (document.getElementById("resultado-entretenimiento")?.style.display === "block") {
-            obtenerHistorialEntretenimiento();
+            if (!resBanco.ok) throw new Error("Error al asentar débito local");
+
+            // 3. Renderizar respuesta premium de éxito en el UI
+            resultadoDiv.innerHTML = `
+                <div style="border-left: 4px solid var(--accent-emerald); padding-left: 10px;">
+                    <h4 class="txt-aprobado"><i class="fa-solid fa-circle-check"></i> TRANSACCIÓN AUTORIZADA</h4>
+                    <p style="margin-top:0.5rem; color: var(--text-primary);">Servicio: <strong>${dataJson.nombre}</strong> (Ref: #AURA-${Math.floor(Math.random() * 90000 + 10000)})</p>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Estado: Enrutado Exitosamente por Pasarela Externa</p>
+                </div>`;
+
+            showToast(`Pago de ${nombreServicio} procesado correctamente`, "success");
+            
+            // 4. Recargar datos del dashboard, saldo y movimientos en tiempo real
+            cargarDatos();
+        } else {
+            // Manejo de rechazos controlados por la API
+            resultadoDiv.innerHTML = `
+                <div style="border-left: 4px solid var(--accent-crimson); padding-left: 10px;">
+                    <h4 class="txt-rechazado">TRANSACCIÓN RECHAZADA</h4>
+                    <p style="margin-top:0.5rem; color: var(--text-secondary);">La pasarela externa no aprobó el cobro automático.</p>
+                </div>`;
+            showToast("Transacción rechazada por el proveedor del servicio", "error");
         }
 
-    } catch (err) {
-        console.error(err);
-        showToast(`Error de interconexión al procesar el pago de ${nombre}`, "error");
+    } catch (error) {
+        console.error(error);
+        resultadoDiv.innerHTML = `
+            <div style="border-left: 4px solid var(--accent-crimson); padding-left: 10px;">
+                <h4 class="txt-rechazado">ERROR DE CONEXIÓN</h4>
+                <p style="margin-top:0.5rem; color: var(--text-secondary);">No se pudo establecer comunicación segura con los servidores de cobro externos.</p>
+            </div>`;
+        showToast("Fallo crítico en el procesamiento del pago", "error");
     }
-}
-
-function obtenerHistorialEntretenimiento() {
-    const contenedor = document.getElementById("resultado-entretenimiento");
-    if (!contenedor) return;
-
-    // Filtra del log de movimientos traídos de la base de datos aquellos vinculados a streaming
-    const streamingLogs = appState.movimientos.filter(m => {
-        const tipo = (m.tipo || "").toLowerCase();
-        return tipo.includes("netflix") || tipo.includes("hbo") || tipo.includes("paramount") || tipo.includes("entretenimiento");
-    });
-
-    contenedor.style.display = "block";
-
-    if (streamingLogs.length === 0) {
-        contenedor.innerHTML = `
-            <h4 style="margin-bottom: 0.5rem; color: #d4af37;">Historial de Pagos Externos</h4>
-            <p style="color: #9ca3af; font-size: 0.9rem;">No se registran transacciones externas hacia plataformas de contenido en este período fiscal.</p>
-        `;
-        return;
-    }
-
-    let html = `
-        <h4 style="margin-bottom: 1rem; color: #d4af37;">Historial de Pagos Externos (Streaming)</h4>
-        <div class="table-responsive">
-            <table class="premium-table" style="margin-top: 0;">
-                <thead>
-                    <tr>
-                        <th>Concepto / Proveedor</th>
-                        <th>Fecha de Cargo</th>
-                        <th class="text-right">Monto Líquido</th>
-                    </tr>
-                </thead>
-                <tbody>
-    `;
-
-    streamingLogs.forEach(m => {
-        html += `
-            <tr>
-                <td><span style="color: #ef4444; margin-right: 6px;">●</span> Debito ${m.tipo}</td>
-                <td>${formatFecha(m.fecha)}</td>
-                <td class="text-right" style="font-weight:600; color: #ef4444;">-Q${formatMoney(m.monto)}</td>
-            </tr>
-        `;
-    });
-
-    html += `</tbody></table></div>`;
-    contenedor.innerHTML = html;
 }
 
 // ========================================
-// ENRUTADOR DE NAVEGACIÓN INTERNA (SPA)
+// SISTEMA COGNITIVO DE NAVEGACIÓN ENTRE VISTAS
 // ========================================
 function navigateToView(viewId) {
     document.querySelectorAll(".app-view").forEach(v => v.classList.remove("active"));
-    const viewEl = document.getElementById(viewId);
-    if (viewEl) viewEl.classList.add("active");
+    document.getElementById(viewId)?.classList.add("active");
 
     document.querySelectorAll(".menu-item").forEach(i => i.classList.remove("active"));
     document.querySelector(`[data-target="${viewId}"]`)?.classList.add("active");
 }
 
 // ========================================
-// UTILERÍAS DE FORMATO
+// CONSULTA HISTÓRICA DE MOVIMIENTOS
+// ========================================
+async function cargarMovimientos() {
+    try {
+        const res = await fetch(`${API}/api/Cuenta/movimientos?cuentaId=${appState.cuentaId}`);
+        if (!res.ok) return;
+
+        const data = await res.json();
+        // Transformar e indexar flujos del backend
+        appState.movimientos = data.map(m => ({
+            tipo: m.tipo || "Débito / Pago Realizado",
+            fecha: m.fecha || new Date().toISOString(),
+            monto: m.monto
+        }));
+
+        renderMovimientosTabla();
+        renderFinancialChart(appState.movimientos);
+    } catch {
+        console.warn("No se pudieron auditar los movimientos dinámicos en este ciclo.");
+    }
+}
+
+// ========================================
+// RENDERIZADO VISUAL DEL REGISTRO DE TABLA
+// ========================================
+function renderMovimientosTabla() {
+    const tbody = document.getElementById("transactions-log");
+    if (!tbody) return;
+
+    tbody.innerHTML = "";
+
+    if (appState.movimientos.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" class="text-center" style="color: var(--text-muted); padding: 2rem;">Ningún movimiento patrimonial registrado en este ciclo.</td></tr>`;
+        return;
+    }
+
+    appState.movimientos.forEach(m => {
+        const tr = document.createElement("tr");
+        
+        // Detectar si es un ingreso (Depósito de Capital) o egreso para aplicar color premium
+        const esIngreso = m.tipo.toLowerCase().includes("depósito") || m.tipo.toLowerCase().includes("ingreso");
+        const colorStyle = esIngreso ? "color: var(--accent-emerald);" : "color: var(--accent-crimson);";
+        const signo = esIngreso ? "+" : "-";
+
+        tr.innerHTML = `
+            <td><strong>${m.tipo}</strong></td>
+            <td>${formatFecha(m.fecha)}</td>
+            <td class="text-right" style="font-weight:600; ${colorStyle}">${signo} Q${formatMoney(montoAbsoluto(m.monto))}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function montoAbsoluto(val) {
+    return Math.abs(parseFloat(val));
+}
+
+// ========================================
+// ALGORITMO INTEGRADO DE RENDIMIENTO COMPORTAMENTAL (CHART.JS)
+// ========================================
+function renderFinancialChart(movimientos) {
+    const ctx = document.getElementById("analytics-chart");
+    if (!ctx) return;
+
+    if (financialChartInstance) {
+        financialChartInstance.destroy();
+    }
+
+    // Clonar e invertir movimientos para mostrarlos cronológicamente en el gráfico (de viejo a nuevo)
+    const movimientosCronologicos = [...movimientos].reverse();
+
+    // Reconstruir histórico analítico de saldo a partir de los flujos
+    let balanceHistorico = 0;
+    const dataPuntos = movimientosCronologicos.map(m => {
+        const esIngreso = m.tipo.toLowerCase().includes("depósito") || m.tipo.toLowerCase().includes("ingreso");
+        if (esIngreso) {
+            balanceHistorico += montoAbsoluto(m.monto);
+        } else {
+            balanceHistorico -= montoAbsoluto(m.monto);
+        }
+        return balanceHistorico;
+    });
+
+    const labels = movimientosCronologicos.map(m => formatFecha(m.fecha));
+
+    // Si no hay datos, inicializar gráfico con balance actual plano
+    if (movimientos.length === 0) {
+        labels.push("Actual");
+        dataPuntos.push(appState.saldo);
+    }
+
+    financialChartInstance = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Evolución Patrimonial Líquida (Q)",
+                data: dataPuntos,
+                borderColor: "#d4af37", // Oro Premium Aura
+                borderWidth: 2,
+                pointBackgroundColor: "#10121a",
+                pointBorderColor: "#d4af37",
+                pointHoverRadius: 6,
+                tension: 0.35,
+                fill: true,
+                backgroundColor: "rgba(212, 175, 55, 0.04)"
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    grid: { color: "rgba(255,255,255,0.02)" },
+                    ticks: { color: "#6b7280", font: { family: "Plus Jakarta Sans", size: 10 } }
+                },
+                y: {
+                    grid: { color: "rgba(255,255,255,0.04)" },
+                    ticks: { color: "#6b7280", font: { family: "Plus Jakarta Sans", size: 10 } }
+                }
+            }
+        }
+    });
+}
+
+// ========================================
+// INTERRUPTOR VISUAL DE FORMULARIOS AUTH
 // ========================================
 function formatMoney(num) {
     return Number(num).toLocaleString("es-GT", {
@@ -526,6 +501,7 @@ function formatMoney(num) {
     });
 }
 
+// Format optimizado para etiquetas scannables de Chart.js
 function formatFecha(f) {
     if (!f) return "";
     return new Date(f).toLocaleDateString("es-GT", { day: 'numeric', month: 'short' });
@@ -547,10 +523,10 @@ function logout() {
         financialChartInstance = null;
     }
 
-    document.getElementById("main-app")?.classList.add("hidden");
-    document.getElementById("auth-container")?.classList.remove("hidden");
+    document.getElementById("main-app").classList.add("hidden");
+    document.getElementById("auth-container").classList.remove("hidden");
     
-    document.getElementById("form-login")?.reset();
+    document.getElementById("form-login").reset();
     switchAuthForm("login");
 
     showToast("Sesión cerrada de manera segura ✅", "normal");
@@ -571,8 +547,7 @@ function showToast(msg, type = "normal") {
 
     setTimeout(() => {
         t.style.opacity = "0";
-        t.style.transform = "translateY(10px)";
-        t.style.transition = "all 0.4s ease";
+        t.style.transform = "translateX(-20px)";
         setTimeout(() => t.remove(), 400);
-    }, 3500);
+    }, 4000);
 }
