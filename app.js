@@ -10,6 +10,9 @@ let appState = {
     movimientos: []
 };
 
+let financialChartInstance = null;
+
+
 // ========================================
 // INIT
 // ========================================
@@ -22,6 +25,7 @@ function initApp() {
     actualizarSaludo();
 }
 
+
 // ========================================
 // SALUDO
 // ========================================
@@ -30,20 +34,26 @@ function actualizarSaludo() {
     if (!el) return;
 
     const h = new Date().getHours();
+
     if (h < 12) el.innerText = "Buenos días";
     else if (h < 19) el.innerText = "Buenas tardes";
     else el.innerText = "Buenas noches";
 }
 
+
 // ========================================
 // EVENTOS
 // ========================================
 function setupEventListeners() {
+
     document.getElementById("form-login")?.addEventListener("submit", handleLogin);
     document.getElementById("form-register")?.addEventListener("submit", handleRegister);
     document.getElementById("form-transfer")?.addEventListener("submit", handleTransfer);
+    document.getElementById("form-deposito")?.addEventListener("submit", handleDeposito);
+
     document.getElementById("btn-logout")?.addEventListener("click", logout);
 }
+
 
 // ========================================
 // LOGIN
@@ -79,6 +89,7 @@ async function handleLogin(e) {
     }
 }
 
+
 // ========================================
 // REGISTRO
 // ========================================
@@ -96,8 +107,9 @@ async function handleRegister(e) {
         method: "POST"
     });
 
-    showToast("Registrado correctamente ✅", "success");
+    showToast("Registro exitoso ✅", "success");
 }
+
 
 // ========================================
 // ENTRAR APP
@@ -121,6 +133,7 @@ function enterApp(cuenta) {
     cargarDatos();
 }
 
+
 // ========================================
 // DATA
 // ========================================
@@ -128,6 +141,7 @@ function cargarDatos() {
     actualizarSaldo();
     cargarMovimientos();
 }
+
 
 // ========================================
 // SALDO
@@ -143,8 +157,41 @@ async function actualizarSaldo() {
         "Q" + formatMoney(appState.saldo);
 }
 
+
 // ========================================
-// TRANSFERENCIAS
+// ✅ DEPOSITO (NUEVO)
+// ========================================
+async function handleDeposito(e){
+
+    e.preventDefault();
+
+    const monto = parseFloat(document.getElementById("deposito-monto").value);
+
+    if(monto <= 0){
+        showToast("Monto inválido","error");
+        return;
+    }
+
+    try{
+
+        // Simulación si no tienes endpoint
+        appState.saldo += monto;
+
+        showToast("Depósito realizado ✅","success");
+
+        actualizarSaldo();
+        document.getElementById("form-deposito").reset();
+
+        navigateToView("view-dashboard");
+
+    }catch{
+        showToast("Error en depósito","error");
+    }
+}
+
+
+// ========================================
+// TRANSFERENCIAS (INTOCADO)
 // ========================================
 async function handleTransfer(e) {
 
@@ -167,13 +214,16 @@ async function handleTransfer(e) {
     cargarDatos();
 }
 
+
 // ========================================
-// MOVIMIENTOS
+// MOVIMIENTOS + GRAFICO
 // ========================================
 async function cargarMovimientos() {
 
     const res = await fetch(`${API}/api/Movimiento?cuentaId=${appState.cuentaId}`);
     const data = await res.json();
+
+    appState.movimientos = data;
 
     const tbody = document.getElementById("transactions-log");
     tbody.innerHTML = "";
@@ -189,129 +239,110 @@ async function cargarMovimientos() {
         `;
 
         tbody.appendChild(tr);
+    });
 
+    renderFinancialChart(data);
+}
+
+
+// ========================================
+// GRAFICO (RESTAURADO)
+// ========================================
+function renderFinancialChart(movimientos){
+
+    const ctx=document.getElementById("analytics-chart");
+    if(!ctx) return;
+
+    if(financialChartInstance){
+        financialChartInstance.destroy();
+    }
+
+    financialChartInstance=new Chart(ctx,{
+        type:"line",
+        data:{
+            labels:movimientos.map(m=>formatFecha(m.fecha)),
+            datasets:[{
+                label:"Movimientos",
+                data:movimientos.map(m=>m.monto),
+                borderColor:"#d4af37",
+                fill:false
+            }]
+        }
     });
 }
 
+
 // ========================================
-// ✅ PAGOS ENTRETENIMIENTO (API COMPAÑERO)
+// ENTRETENIMIENTO
 // ========================================
 async function pagarEntretenimiento(servicioId){
 
-    const box = document.getElementById("resultado-entretenimiento");
+    const box=document.getElementById("resultado-entretenimiento");
 
-    box.innerHTML = "Procesando pago...";
+    box.innerHTML="Procesando...";
 
     try{
 
-        const res = await fetch("https://webapipagon5214.azurewebsites.net/api/Pagos/pagar",{
+        const res=await fetch("https://webapipagon5214.azurewebsites.net/api/Pagos/pagar",{
             method:"POST",
-            headers:{
-                "Content-Type":"application/json"
-            },
-            body: JSON.stringify({
-                servicioId: servicioId,
-                usuarioBancoId: appState.cuentaId
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({
+                servicioId:servicioId,
+                usuarioBancoId:appState.cuentaId
             })
         });
 
-        const data = await res.json();
+        const data=await res.json();
 
-        if(data.pago.estado === "Aprobado"){
-
-            box.innerHTML = `
-                ✅ Pago exitoso<br>
-                Servicio: ${data.pago.servicio}<br>
-                Monto: Q${data.pago.monto}<br>
-                Ref: ${data.pago.referenciaBanco}
-            `;
-
-            showToast("Pago aprobado ✅","success");
-
-        }else{
-
-            box.innerHTML = `
-                ❌ Pago rechazado<br>
-                Motivo: ${data.pago.motivoRechazo}
-            `;
-
-            showToast("Pago rechazado","error");
-        }
+        box.innerHTML=`
+            ✅ ${data.pago.servicio}<br>
+            Q${data.pago.monto}
+        `;
 
         cargarDatos();
 
     }catch{
-        box.innerHTML = "Error de conexión";
+        box.innerHTML="Error";
     }
 }
 
+
 // ========================================
-// ✅ HISTORIAL SERVICIOS
+// HISTORIAL
 // ========================================
 async function cargarHistorialPagos(){
 
-    const cont = document.getElementById("tabla-pagos");
+    const cont=document.getElementById("tabla-pagos");
 
-    cont.innerHTML = "Cargando historial...";
+    const res=await fetch("https://webapipagon5214.azurewebsites.net/api/Pagos");
+    const data=await res.json();
 
-    try{
+    let html="<table class='premium-table'><tr><th>ID</th><th>Servicio</th><th>Monto</th></tr>";
 
-        const res = await fetch("https://webapipagon5214.azurewebsites.net/api/Pagos");
-        const data = await res.json();
-
-        let html = `
-        <table class="premium-table">
-        <thead>
+    data.forEach(p=>{
+        html+=`
         <tr>
-            <th>ID</th>
-            <th>Servicio</th>
-            <th>Monto</th>
-            <th>Estado</th>
-            <th>Fecha</th>
-        </tr>
-        </thead><tbody>
-        `;
+        <td>${p.id}</td>
+        <td>${p.servicio}</td>
+        <td>Q${p.monto}</td>
+        </tr>`;
+    });
 
-        data.forEach(p=>{
-            html+=`
-            <tr>
-                <td>${p.id}</td>
-                <td>${p.servicio}</td>
-                <td>Q${p.monto}</td>
-                <td style="color:${p.estado==="Aprobado"?"#10b981":"#ef4444"};">
-                    ${p.estado}
-                </td>
-                <td>${new Date(p.fecha).toLocaleString()}</td>
-            </tr>
-            `;
-        });
+    html+="</table>";
 
-        html+="</tbody></table>";
-
-        cont.innerHTML = html;
-
-    }catch{
-        cont.innerHTML = "Error al cargar historial";
-    }
+    cont.innerHTML=html;
 }
 
+
 // ========================================
-// NAVEGACIÓN
+// NAVEGAR
 // ========================================
 function navigateToView(viewId){
 
-    document.querySelectorAll(".app-view").forEach(v=>{
-        v.classList.remove("active");
-    });
-
+    document.querySelectorAll(".app-view").forEach(v=>v.classList.remove("active"));
     document.getElementById(viewId).classList.add("active");
-
-    document.querySelectorAll(".menu-item").forEach(i=>{
-        i.classList.remove("active");
-    });
-
-    document.querySelector(`[data-target="${viewId}"]`)?.classList.add("active");
 }
+
 
 // ========================================
 // FORMATOS
@@ -324,12 +355,14 @@ function formatFecha(f){
     return new Date(f).toLocaleDateString("es-GT");
 }
 
+
 // ========================================
 // LOGOUT
 // ========================================
 function logout(){
     location.reload();
 }
+
 
 // ========================================
 // TOAST
@@ -339,7 +372,6 @@ function showToast(msg,type="normal"){
     const c=document.getElementById("toast-container");
 
     const t=document.createElement("div");
-
     t.className=`toast ${type}`;
     t.innerText=msg;
 

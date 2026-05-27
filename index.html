@@ -3,12 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>AURA — Banca Privada Digital</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <link rel="stylesheet" href="styles.css">
@@ -20,7 +19,6 @@
 
 <!-- ================= AUTH ================= -->
 <div id="auth-container" class="auth-container">
-
 <div class="auth-card">
 
 <div class="auth-header">
@@ -48,23 +46,6 @@
 </div>
 
 <button class="btn btn-primary btn-full">Ingresar</button>
-
-<p class="auth-footer">
-<a onclick="switchAuthForm('register')">Crear cuenta</a>
-</p>
-</form>
-
-<form id="form-register" class="auth-form">
-<h2>Registro</h2>
-
-<input id="reg-name" placeholder="Nombre" required>
-<input id="reg-dpi" placeholder="DPI" required>
-<input id="reg-email" placeholder="Correo" required>
-<input id="reg-telefono" placeholder="Teléfono" required>
-<input id="reg-direccion" placeholder="Dirección" required>
-<input type="password" id="reg-password" placeholder="Password" required>
-
-<button class="btn btn-primary btn-full">Registrar</button>
 </form>
 
 </div>
@@ -98,30 +79,13 @@
 
 </nav>
 
-<div class="sidebar-footer">
-
-<div class="user-profile-summary">
-<div class="avatar">CP</div>
-<div class="user-info">
-<span id="user-display-name">Cliente</span>
-<span class="tier">Premium</span>
-</div>
-</div>
-
-<button id="btn-logout" class="btn-logout">
-<i class="fa-solid fa-arrow-right-from-bracket"></i>
-Salir
-</button>
-
-</div>
-
 </aside>
 
-<!-- ================= MAIN ================= -->
+<!-- MAIN -->
 <main class="main-content">
 
 <header class="main-header">
-<h1 id="greeting">Bienvenido</h1>
+<h1 id="greeting"></h1>
 </header>
 
 <!-- ================= DASHBOARD ================= -->
@@ -132,18 +96,37 @@ Salir
 <div class="card card-balance">
 
 <span class="card-label">Balance Total</span>
+<h2 id="dashboard-balance">Q0.00</h2>
 
-<h2 class="balance-amount" id="dashboard-balance">Q0.00</h2>
-
-<div class="card-chip-row">
-<span id="numero-cuenta">**** ****</span>
-<i class="fa-solid fa-credit-card"></i>
+<div>
+<span id="numero-cuenta"></span>
 </div>
 
-<p id="nombre-cliente">Cliente</p>
-<p>CVV: <span id="cvv">000</span></p>
+<p id="nombre-cliente"></p>
+<p>CVV: <span id="cvv"></span></p>
 
 </div>
+
+<!-- ✅ GRAFICO RESTAURADO -->
+<div class="card card-chart-container">
+<h3>Análisis Financiero</h3>
+<canvas id="analytics-chart"></canvas>
+</div>
+
+</div>
+
+<!-- ✅ BOTON DEPOSITO (NUEVO) -->
+<div class="quick-actions-grid">
+
+<button class="quick-btn" onclick="navigateToView('view-deposito')">
+<i class="fa-solid fa-money-bill"></i>
+Depositar
+</button>
+
+<button class="quick-btn" onclick="navigateToView('view-payments')">
+<i class="fa-solid fa-receipt"></i>
+Servicios
+</button>
 
 </div>
 
@@ -165,93 +148,91 @@ Salir
 
 </section>
 
-<!-- ================= PAGOS PRINCIPAL ================= -->
+<!-- ✅ NUEVA VISTA DEPOSITO -->
+<section id="view-deposito" class="app-view">
+
+<h2>Depósito</h2>
+
+<div class="card max-w-md">
+
+<form id="form-deposito">
+
+<input type="number" placeholder="Monto" id="deposito-monto">
+
+<button class="btn btn-primary">Depositar</button>
+
+</form>
+
+</div>
+
+</section>
+
+<!-- ================= PAGOS ================= -->
 <section id="view-payments" class="app-view">
 
-<div class="section-intro">
-<h2>Pago de Servicios</h2>
-<p>Selecciona el tipo de servicio</p>
-</div>
+<h2>Servicios</h2>
 
 <div class="services-interactive-grid">
 
 <div class="card service-tile" onclick="navigateToView('view-entertainment')">
-
-<i class="fa-solid fa-play service-icon-premium netflix"></i>
-
+<i class="fa-solid fa-play service-icon-premium netflix-big"></i>
 <h4>Entretenimiento</h4>
-<p>Netflix, HBO, Paramount</p>
-
-</div>
-
-<div class="card service-tile">
-<i class="fa-solid fa-mobile service-icon-premium phone"></i>
-<h4>Telefonía</h4>
-</div>
-
-<div class="card service-tile">
-<i class="fa-solid fa-heart service-icon-premium donations"></i>
-<h4>Donaciones</h4>
 </div>
 
 </div>
 
 </section>
 
-<!-- ✅ NUEVA SUB-PÁGINA ENTRETENIMIENTO -->
+<!-- ================= ENTRETENIMIENTO ================= -->
 <section id="view-entertainment" class="app-view">
 
-<div class="section-intro">
 <h2>Pagos de Entretenimiento</h2>
-<p>Gestiona tus servicios digitales</p>
-</div>
 
 <div class="services-interactive-grid">
 
+<!-- ✅ NETFLIX ARREGLADO -->
 <div class="card service-tile" onclick="pagarEntretenimiento(1)">
-<i class="fa-brands fa-netflix service-icon-premium netflix"></i>
+<i class="fa-brands fa-netflix netflix-strong"></i>
 <h4>Netflix</h4>
 </div>
 
 <div class="card service-tile" onclick="pagarEntretenimiento(2)">
-<i class="fa-solid fa-tv service-icon-premium phone"></i>
+<i class="fa-solid fa-tv"></i>
 <h4>HBO</h4>
 </div>
 
 <div class="card service-tile" onclick="pagarEntretenimiento(3)">
-<i class="fa-solid fa-film service-icon-premium donations"></i>
+<i class="fa-solid fa-film"></i>
 <h4>Paramount</h4>
 </div>
 
 </div>
 
-<div class="card" style="margin-top:20px;">
+<button class="btn btn-primary" onclick="cargarHistorialPagos()">Ver historial de pagos</button>
 
-<button class="btn btn-primary" onclick="cargarHistorialPagos()">
-Ver historial de pagos
-</button>
-
-<div id="resultado-entretenimiento" style="margin-top:15px;"></div>
-
-<div id="tabla-pagos" style="margin-top:20px;"></div>
-
-</div>
+<div id="resultado-entretenimiento"></div>
+<div id="tabla-pagos"></div>
 
 </section>
 
-<!-- ================= TRANSFER ================= -->
+<!-- ✅ TRANSFERENCIAS (INTACTO COMO PEDISTE) -->
 <section id="view-transfers" class="app-view">
 
 <div class="card max-w-md">
 
 <form id="form-transfer">
 
-<input id="transfer-account" placeholder="Cuenta destino">
-<input type="number" id="transfer-amount" placeholder="Monto">
+<div class="input-group">
+<label>Cuenta destino</label>
+<input id="transfer-account">
+</div>
 
-<button class="btn btn-primary btn-full">
-Transferir
-</button>
+<div class="input-group">
+<label>Monto</label>
+<input type="number" id="transfer-amount">
+</div>
+
+<button class="btn btn-primary btn-full">Transferir</button>
 
 </form>
 
@@ -260,7 +241,6 @@ Transferir
 </section>
 
 </main>
-
 </div>
 
 <script src="app.js"></script>

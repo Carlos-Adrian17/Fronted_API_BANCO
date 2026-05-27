@@ -415,3 +415,15 @@ body {
     .menu-item { justify-content: center; padding: 1.1rem; }
     .main-content { margin-left: 90px; padding: 2.5rem; }
 }
+
+/* NETFLIX MÁS VISIBLE */
+.netflix-strong {
+    color: #ff1a1a;
+    font-size: 28px;
+    text-shadow: 0 0 12px rgba(255,0,0,0.8);
+}
+
+/* ICONO GRANDE */
+.netflix-big {
+    color: #ff1a1a;
+}
