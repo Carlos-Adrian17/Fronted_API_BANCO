@@ -318,7 +318,8 @@ async function ejecutarPagoEntretenimiento(servicioId, nombreServicio) {
 
     await actualizarSaldoVista();
 
-    const seguro = confirm(`¿Desea autorizar el pago para ${nombreServicio}?`);
+    // ✅ REEMPLAZO DE confirm() POR MODAL PERSONALIZADO
+    const seguro = await mostrarConfirmacion(`¿Desea autorizar el pago para ${nombreServicio}?`);
     if (!seguro) return;
 
     if (appState.saldo <= 0) {
@@ -343,7 +344,15 @@ async function ejecutarPagoEntretenimiento(servicioId, nombreServicio) {
             })
         });
 
-        const data = await response.json();
+        let data;
+
+        // ✅ PROTECCIÓN CONTRA RESPUESTA INVALIDA
+        try {
+            data = await response.json();
+        } catch {
+            data = {};
+        }
+
         console.log("RESPUESTA ENTRETENIMIENTO:", data);
 
         if (data.pago && data.pago.estado === "Aprobado") {
@@ -383,7 +392,7 @@ async function ejecutarPagoEntretenimiento(servicioId, nombreServicio) {
 
                     <div class="payment-body">
                         <h3>${nombreServicio}</h3>
-                        <p class="error-text">Saldo Insuficiente</p>
+                        <p class="error-text">Saldo insuficiente</p>
                     </div>
                 </div>
             `;
@@ -401,7 +410,7 @@ async function ejecutarPagoEntretenimiento(servicioId, nombreServicio) {
                     <span>ERROR</span>
                 </div>
                 <div class="payment-body">
-                    <p>No se pudo conectar con el servicio</p>
+                    <p>${error.message || "No se pudo conectar con el servicio"}</p>
                 </div>
             </div>
         `;
@@ -639,7 +648,8 @@ async function pagarClub(servicioId, nombre) {
 
     await actualizarSaldoVista();
 
-    const confirmar = confirm(`¿Desea pagar ${nombre}?`);
+    // ✅ USAR MODAL PERSONALIZADO
+    const confirmar = await mostrarConfirmacion(`¿Desea pagar ${nombre}?`);
     if (!confirmar) return;
 
     if (appState.saldo <= 0) {
@@ -664,7 +674,15 @@ async function pagarClub(servicioId, nombre) {
             })
         });
 
-        const data = await response.json();
+        let data;
+
+        // ✅ PROTECCIÓN SI LA API FALLA O NO ENVÍA JSON
+        try {
+            data = await response.json();
+        } catch {
+            data = {};
+        }
+
         console.log("RESPUESTA CLUB:", data);
 
         if (data.pago && data.pago.estado === "Aprobado") {
@@ -704,7 +722,7 @@ async function pagarClub(servicioId, nombre) {
 
                     <div class="payment-body">
                         <h3>${nombre}</h3>
-                        <p class="error-text">Saldo Insuficiente</p>
+                        <p class="error-text">Saldo insuficiente</p>
                     </div>
                 </div>
             `;
@@ -722,13 +740,12 @@ async function pagarClub(servicioId, nombre) {
                     <span>ERROR</span>
                 </div>
                 <div class="payment-body">
-                    <p>No se pudo conectar con el servicio</p>
+                    <p>${error.message || "No se pudo conectar con el servicio"}</p>
                 </div>
             </div>
         `;
     }
 }
-
 
 // ========================================
 // ✅ DONACIONES
@@ -754,9 +771,12 @@ async function procesarDonacion(e){
         return;
     }
 
-    const card = document.getElementById("donation-form-card");
+    // ✅ CONFIRMACIÓN MODERNA (igual que otros módulos)
+    const confirmar = await mostrarConfirmacion(`¿Desea donar Q${monto.toFixed(2)} a ${donationData.nombre}?`);
+    if (!confirmar) return;
 
-    card.innerHTML = "Procesando donación...";
+    const resultDiv = document.getElementById("donation-result");
+    resultDiv.innerHTML = "Procesando donación...";
 
     try {
 
@@ -772,49 +792,57 @@ async function procesarDonacion(e){
             })
         });
 
-            const data = await res.json();
-            console.log("RESPUESTA JSON:", data);
+        let data;
 
-            // ✅ manejo de error
-            if (!res.ok) {
+        // ✅ PROTECCIÓN SI API FALLA
+        try {
+            data = await res.json();
+        } catch {
+            data = {};
+        }
 
-                const mensaje = data.mensaje || data.error || "Error en donación";
+        console.log("RESPUESTA JSON:", data);
 
-                card.innerHTML = `
-                    <div class="payment-card error">
-                        <div class="payment-header">
-                            <i class="fa-solid fa-xmark-circle"></i>
-                            <span>DONACIÓN FALLIDA</span>
-                        </div>
-                        <div class="payment-body">
-                            <p>${mensaje}</p>
-                        </div>
-                    </div>
-                `;
+        // ✅ MANEJO DE ERROR
+        if (!res.ok) {
 
-                showToast(mensaje, "error");
-                return;
-            }
+            const mensaje = data.mensaje || data.error || "Error en donación";
 
-        const fecha = new Date().toLocaleString();
-
-            document.getElementById("donation-result").innerHTML = `
-                <div class="payment-card success">
+            resultDiv.innerHTML = `
+                <div class="payment-card error">
                     <div class="payment-header">
-                        <i class="fa-solid fa-hand-holding-heart"></i>
-                        <span>DONACIÓN EXITOSA</span>
+                        <i class="fa-solid fa-xmark-circle"></i>
+                        <span>DONACIÓN FALLIDA</span>
                     </div>
-
                     <div class="payment-body">
-                        <h3>${donationData.nombre}</h3>
-                        <p class="amount">Q${monto.toFixed(2)}</p>
-                    </div>
-
-                    <div class="payment-footer">
-                        <span>${fecha}</span>
+                        <p>${mensaje}</p>
                     </div>
                 </div>
             `;
+
+            showToast(mensaje, "error");
+            return;
+        }
+
+        const fecha = new Date().toLocaleString();
+
+        resultDiv.innerHTML = `
+            <div class="payment-card success">
+                <div class="payment-header">
+                    <i class="fa-solid fa-hand-holding-heart"></i>
+                    <span>DONACIÓN EXITOSA</span>
+                </div>
+
+                <div class="payment-body">
+                    <h3>${donationData.nombre}</h3>
+                    <p class="amount">Q${monto.toFixed(2)}</p>
+                </div>
+
+                <div class="payment-footer">
+                    <span>${fecha}</span>
+                </div>
+            </div>
+        `;
 
         showToast("Donación realizada ✅", "success");
 
@@ -825,16 +853,16 @@ async function procesarDonacion(e){
         await actualizarSaldoVista();
 
     } catch (error) {
-        console.error(error);
+        console.error("ERROR DONACIÓN:", error);
 
-        card.innerHTML = `
+        resultDiv.innerHTML = `
             <div class="payment-card error">
                 <div class="payment-header">
                     <i class="fa-solid fa-xmark-circle"></i>
                     <span>ERROR</span>
                 </div>
                 <div class="payment-body">
-                    <p>No se pudo conectar</p>
+                    <p>${error.message || "No se pudo conectar con el servidor"}</p>
                 </div>
             </div>
         `;

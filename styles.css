@@ -420,3 +420,16 @@ body {
     .menu-item { justify-content: center; padding: 1.1rem; }
     .main-content { margin-left: 90px; padding: 2.5rem; }
 }
+
+.price-text {
+    font-size: 1rem;
+    color: #22c55e; /* verde tipo dinero */
+    margin-top: 6px;
+    font-weight: 600;
+}
+
+.price-text span {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    font-weight: 400;
+}
