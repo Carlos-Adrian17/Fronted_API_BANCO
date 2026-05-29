@@ -256,16 +256,22 @@
                             <h4>Servicios de Entretenimiento</h4>
                             <p>Suscripciones de Streaming y Contenido Digital</p>
                         </div>
-                        <div class="card service-tile" onclick="showToast('Módulo de telefonía en mantenimiento estratégico', 'normal')">
-                            <i class="fa-solid fa-mobile-screen service-icon-premium phone"></i>
-                            <h4>Telefonía & Datos Celulares</h4>
-                            <p>Planes Postpago Nacionales</p>
-                        </div>
-                        <div class="card service-tile" onclick="showToast('Módulo de aportaciones filantrópicas en mantenimiento', 'normal')">
-                            <i class="fa-solid fa-heart-pulse service-icon-premium donations"></i>
-                            <h4>Donaciones Filantrópicas</h4>
-                            <p>Aportaciones de Impacto Global</p>
-                        </div>
+
+
+                            <!-- ✅ CLUBS -->
+                            <div class="card service-tile" onclick="openClubsSubPage()">
+                                <i class="fa-solid fa-dumbbell service-icon-premium phone"></i>
+                                <h4>Clubs</h4>
+                                <p>Membresías</p>
+                            </div>
+
+                            <!-- ✅ DONACIONES -->
+                            <div class="card service-tile" onclick="openDonationsSubPage()">
+                                <i class="fa-solid fa-hand-holding-heart service-icon-premium donations"></i>
+                                <h4>Donaciones</h4>
+                                <p>Instituciones</p>
+                            </div>
+
                     </div>
                 </div>
 
@@ -307,6 +313,85 @@
                     <div id="resultado-entretenimiento" class="card table-card-layout" style="margin-top: 2rem; display: none;"></div>
                 </div>
 
+                    <!-- CLUBS -->
+                    <div id="payments-clubs-view" class="hidden">
+
+                        <div class="section-intro" style="display:flex;justify-content:space-between;align-items:center;">
+                            <div>
+                                <h2>Membresías de Clubs</h2>
+                                <p>Gestiona tu acceso a clubes y academias</p>
+                            </div>
+
+                            <button class="btn btn-primary" onclick="closeClubsSubPage()">
+                                <i class="fa-solid fa-arrow-left"></i> Regresar
+                            </button>
+                        </div>
+
+                        <div class="services-interactive-grid" style="margin-top:2rem;">
+                            <div class="card service-tile sub-pay-tile" onclick="pagarClub(1, 'Gimnasio')">
+                            <i class="fa-solid fa-dumbbell service-icon-premium"
+                                style="background-color: rgba(0,200,100,0.15); color: #00c864;"></i>
+                                <h4>Gimnasio</h4>
+                            </div>
+
+                            <div class="card service-tile sub-pay-tile" onclick="pagarClub(2, 'Academia de Fútbol')">
+                            <i class="fa-solid fa-futbol service-icon-premium"
+                                style="background-color: rgba(0,123,255,0.15); color: #007BFF;"></i>
+                                <h4>Academia de Fútbol</h4>
+                            </div>
+                        </div>
+                        
+                        <!-- ✅ AQUÍ VA EL HISTORIAL -->
+                        <div style="margin-top: 1.5rem;">
+                            <button class="btn btn-primary" onclick="obtenerHistorialClubs()">
+                                <i class="fa-solid fa-clock-history" style="margin-right: 8px;"></i>
+                                Ver Historial de Pagos de Clubs
+                            </button>
+                        </div>
+
+                        <div id="resultado-clubs" class="card table-card-layout" style="margin-top: 2rem; display: none;"></div>
+
+
+                    </div>
+
+                    <!-- DONACIONES -->
+                    <div id="payments-donations-view" class="hidden">
+
+                        <div class="section-intro" style="display:flex;justify-content:space-between;align-items:center;">
+                            <div>
+                                <h2>Donaciones</h2>
+                                <p>Apoya instituciones con impacto social</p>
+                            </div>
+
+                            <button class="btn btn-primary" onclick="closeDonationsSubPage()">
+                                <i class="fa-solid fa-arrow-left"></i> Regresar
+                            </button>
+                        </div>
+
+                        <div class="services-interactive-grid" style="margin-top:2rem;">
+                            <div class="card service-tile sub-pay-tile" onclick="donar(1, 'AYUVI')">                                
+                            <i class="fa-solid fa-hand-holding-heart service-icon-premium"
+                                style="background-color: rgba(220,20,60,0.15); color: #dc143c;"></i>
+                                <h4>AYUVI</h4>
+                            </div>
+
+                            <div class="card service-tile sub-pay-tile" onclick="donar(2, 'TELETON')">                                
+                            <i class="fa-solid fa-heart service-icon-premium"
+                                style="background-color: rgba(255,0,150,0.15); color: #ff0096;"></i>
+                                <h4>TELETON</h4>
+                            </div>
+                        </div>
+                        
+                            <div style="margin-top: 1.5rem;">
+                                <button class="btn btn-primary" onclick="obtenerHistorialDonaciones()">
+                                    <i class="fa-solid fa-clock-history" style="margin-right: 8px;"></i>
+                                    Ver Historial de Donaciones
+                                </button>
+                            </div>
+
+                            <div id="resultado-donaciones" class="card table-card-layout" style="margin-top: 2rem; display: none;"></div>
+
+                    </div> 
             </section>
 
             <section id="view-transfers" class="app-view">
@@ -318,7 +403,7 @@
                 <div class="card max-w-md">
                     <form id="form-transfer">
                         <div class="input-group">
-                            <label>Identificador de Cuenta Destino (ID)</label>
+                            <label>Número de Cuenta Destino</label>
                             <div class="input-wrapper">
                                 <i class="fa-solid fa-arrow-right-to-bracket"></i>
                                 <input id="transfer-account" placeholder="Ej. 104032" required>

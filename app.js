@@ -239,7 +239,7 @@ async function handleTransfer(e) {
     }
 
     try {
-        const res = await fetch(`${API}/api/Banco/transferir?origenId=${appState.cuentaId}&destinoId=${destino}&monto=${monto}`, {
+         const res = await fetch(`${API}/api/Cuenta/transferir-numero?origenId=${appState.cuentaId}&numeroCuentaDestino=${destino}&monto=${monto}`, {
             method: "POST"
         });
 
@@ -282,6 +282,11 @@ async function ejecutarPagoEntretenimiento(servicioId, nombreServicio) {
     // MÉTODO DE CONFIRMACIÓN DE SEGURIDAD
     const seguro = confirm(`¿Desea autorizar el pago seguro para la plataforma ${nombreServicio}?`);
     if (!seguro) return;
+    
+    if (appState.saldo <= 0) {
+        showToast("Saldo insuficiente para pagar este servicio", "error");
+        return;
+    }
 
     const resultadoDiv = document.getElementById("resultado-entretenimiento");
     resultadoDiv.style.display = "block";
@@ -308,13 +313,11 @@ async function ejecutarPagoEntretenimiento(servicioId, nombreServicio) {
                 <p style="margin-bottom:0.4rem;"><strong>Monto Liquidado:</strong> Q${data.pago.monto}</p>
                 <p><strong>Código Único Referencia Banco:</strong> ${data.pago.referenciaBanco}</p>
             `;
-            showToast(`Pago de ${nombreServicio} Aprobado`, "success");
-            
-            if(data.pago.monto) {
-                appState.saldo -= parseFloat(data.pago.monto);
-                document.getElementById("dashboard-balance").innerText = "Q" + formatMoney(appState.saldo);
-            }
-        } else {
+            showToast(`Pago de ${nombreServicio} Aprobado ✅`, "success");
+
+                    await actualizarSaldoVista();
+                }else {
+
             const motivo = data.pago ? data.pago.motivoRechazo : "Fondos insuficientes detectados";
             resultadoDiv.innerHTML = `
                 <h3 style="color: var(--accent-crimson); margin-bottom: 0.8rem;"><i class="fa-solid fa-circle-xmark"></i> Pago Denegado por la Entidad</h3>
@@ -484,9 +487,13 @@ function navigateToView(viewId) {
     document.querySelector(`[data-target="${viewId}"]`)?.classList.add("active");
 
     // Reiniciar sub-vista al cambiar o regresar a la pestaña de pagos
-    if (viewId === "view-payments") {
-        closeEntertainmentSubPage();
-    }
+    
+if (viewId === "view-payments") {
+    closeEntertainmentSubPage();
+    closeClubsSubPage();
+    closeDonationsSubPage();
+}
+
 }
 
 // ========================================
@@ -549,4 +556,178 @@ function showToast(msg, type = "normal") {
         t.style.transition = "all 0.4s ease";
         setTimeout(() => t.remove(), 400);
     }, 3500);
+}
+
+// ========================================
+// ✅ SUB-PÁGINAS CLUBS Y DONACIONES
+// ========================================
+function openClubsSubPage(){
+    document.getElementById("payments-categories-view").classList.add("hidden");
+    document.getElementById("payments-clubs-view").classList.remove("hidden");
+}
+
+function closeClubsSubPage(){
+    document.getElementById("payments-clubs-view").classList.add("hidden");
+    document.getElementById("payments-categories-view").classList.remove("hidden");
+}
+
+function openDonationsSubPage(){
+    document.getElementById("payments-categories-view").classList.add("hidden");
+    document.getElementById("payments-donations-view").classList.remove("hidden");
+}
+
+function closeDonationsSubPage(){
+    document.getElementById("payments-donations-view").classList.add("hidden");
+    document.getElementById("payments-categories-view").classList.remove("hidden");
+}
+
+// ========================================
+// ✅ PAGOS CLUBS + HISTORIAL
+// ========================================
+async function pagarClub(servicioId, nombre){
+
+    const confirmar = confirm(`¿Desea autorizar el pago de ${nombre}?`);
+    if (!confirmar) return;
+
+    if (appState.saldo <= 0) {
+        showToast("No tienes saldo disponible para este pago", "error");
+        return;
+    }
+
+    try{
+
+        const response = await fetch("https://apiclub-arg4e0cravhhgxfa.mexicocentral-01.azurewebsites.net/api/Pagos/pagar", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                servicioId: servicioId,
+                usuarioBancoId: appState.cuentaId
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.pago && data.pago.estado === "Aprobado") {
+
+            showToast(`Pago aprobado ✅`, "success");
+
+          await actualizarSaldoVista();
+
+        } else {
+            showToast("Pago rechazado", "error");
+        }
+
+    } catch (error) {
+        console.error(error);
+        showToast("Error en pago club", "error");
+    }
+}
+
+async function obtenerHistorialClubs(){
+
+    const resultadoDiv = document.getElementById("resultado-clubs");
+
+    resultadoDiv.style.display = "block";
+    resultadoDiv.innerHTML = "Cargando historial...";
+
+    try{
+
+        const res = await fetch("https://apiclub-arg4e0cravhhgxfa.mexicocentral-01.azurewebsites.net/api/Pagos");
+        const data = await res.json();
+
+        const filtrado = data.filter(p => p.usuarioBancoId == appState.cuentaId);
+
+        if(filtrado.length === 0){
+            resultadoDiv.innerHTML = "Sin registros";
+            return;
+        }
+
+        let html = "<table class='premium-table'><tr><th>Servicio</th><th>Monto</th></tr>";
+
+        filtrado.forEach(p=>{
+            html+=`
+            <tr>
+                <td>${p.servicio || p.nombre || "Servicio Club"}</td>
+                <td>Q${formatMoney(p.monto)}</td>
+            </tr>`;
+        });
+
+        html+="</table>";
+        resultadoDiv.innerHTML = html;
+
+    }catch{
+        resultadoDiv.innerHTML = "Error al cargar historial";
+    }
+}
+
+// ========================================
+// ✅ DONACIONES + HISTORIAL
+// ========================================
+async function donar(servicioId, nombre){
+
+    const confirmar = confirm(`¿Desea donar a ${nombre}?`);
+    if (!confirmar) return;
+   
+    if (appState.saldo <= 0) {
+        showToast("No tienes saldo disponible para donar", "error");
+        return;
+    }
+
+    try{
+
+        await fetch("https://donacionesapi.azurewebsites.net/api/Donaciones", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                institucionId: servicioId,
+                cuentaId: appState.cuentaId
+            })
+        });
+
+        showToast(`Donación realizada ✅`, "success");
+
+        await actualizarSaldoVista();
+
+    } catch (error) {
+        console.error(error);
+        showToast("Error en donación", "error");
+    }
+}
+
+
+async function obtenerHistorialDonaciones(){
+
+    const resultadoDiv = document.getElementById("resultado-donaciones");
+
+    resultadoDiv.style.display = "block";
+    resultadoDiv.innerHTML = "Cargando historial...";
+
+    try{
+
+        const res = await fetch("https://donacionesapi.azurewebsites.net/api/Donaciones");
+        const data = await res.json();
+
+        const filtrado = data.filter(p => p.cuentaId == appState.cuentaId);
+
+        if(filtrado.length === 0){
+            resultadoDiv.innerHTML = "Sin registros";
+            return;
+        }
+
+        let html = "<table class='premium-table'><tr><th>Institución</th><th>Monto</th></tr>";
+
+        filtrado.forEach(p=>{
+            html+=`
+            <tr>
+                <td>${p.institucion || p.nombre || "Donación"}</td>
+                <td>Q${formatMoney(p.monto)}</td>
+            </tr>`;
+        });
+
+        html+="</table>";
+        resultadoDiv.innerHTML = html;
+
+    }catch{
+        resultadoDiv.innerHTML = "Error al cargar historial";
+    }
 }
