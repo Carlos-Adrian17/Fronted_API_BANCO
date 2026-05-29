@@ -726,11 +726,18 @@ async function procesarDonacion(e){
             })
         });
 
+       
         if (!res.ok) {
             const errorText = await res.text();
-            console.error(errorText);
-            throw new Error();
+
+            console.log("STATUS:", res.status);
+            console.log("ERROR API:", errorText);
+
+            showToast("API: " + errorText, "error");
+
+            return;
         }
+
 
         showToast("Donación realizada ✅", "success");
 
