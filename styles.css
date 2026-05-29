@@ -433,3 +433,76 @@ body {
     color: #94a3b8;
     font-weight: 400;
 }
+
+/* ============================= */
+/* ✅ MODAL DE CONFIRMACIÓN */
+/* ============================= */
+
+.custom-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+
+    /* ✅ animación */
+    opacity: 1;
+    transition: opacity 0.25s ease;
+}
+
+.custom-modal.hidden {
+    display: none;
+    opacity: 0;
+}
+
+.modal-content {
+    background: #0f172a;
+    padding: 2rem;
+    border-radius: 18px;
+    width: 340px;
+    text-align: center;
+
+    box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.05);
+
+    /* ✅ animación entrada */
+    transform: scale(1);
+    animation: modalPop 0.25s ease;
+}
+
+.modal-content h3 {
+    color: #ffffff;
+    margin-bottom: 10px;
+    font-size: 1.2rem;
+}
+
+.modal-content p {
+    color: #cbd5e1;
+    margin-bottom: 22px;
+    font-size: 0.95rem;
+}
+
+/* Botones */
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.modal-actions button {
+    min-width: 110px;
+}
+
+/* ✅ Animación suave */
+@keyframes modalPop {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}

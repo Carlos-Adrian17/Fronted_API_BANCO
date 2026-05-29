@@ -295,12 +295,12 @@
                         <div class="card service-tile sub-pay-tile" onclick="ejecutarPagoEntretenimiento(2, 'HBO')">
                             <i class="fa-solid fa-clapperboard service-icon-premium" style="background-color: rgba(128,0,128,0.15); color: #a855f7;"></i>
                             <h4>Pagar HBO</h4>
-                            <p class="price-text">Q95.00 <span></span>/ mes</span></p>
+                            <p class="price-text">Q95.00 <span>/ mes</span></p>
                         </div>
                         <div class="card service-tile sub-pay-tile" onclick="ejecutarPagoEntretenimiento(3, 'Paramount')">
                             <i class="fa-solid fa-video service-icon-premium" style="background-color: rgba(0,123,255,0.15); color: #007BFF;"></i>
                             <h4>Pagar Paramount</h4>
-                            <p class="price-text">Q60.00 <span></span>/ mes</span></p>
+                            <p class="price-text">Q60.00 <span>/ mes</span></p>
                         </div>
                     </div>
 
@@ -447,6 +447,24 @@
             </section>
         </main>
     </div>
+
+
+        <!-- ✅ MODAL DE CONFIRMACIÓN -->
+        <div id="custom-modal" class="custom-modal hidden">
+            <div class="modal-content">
+                <h3>Confirmar acción</h3>
+                <p id="modal-message"></p>
+
+                <div class="modal-actions">
+                    <button id="modal-confirm" class="btn btn-primary">
+                        Aceptar
+                    </button>
+                    <button id="modal-cancel" class="btn btn-secondary">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
 
     <script src="app.js"></script>
 </body>

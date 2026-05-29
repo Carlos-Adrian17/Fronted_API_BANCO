@@ -641,6 +641,43 @@ function abrirFormularioDonacion(id, nombre) {
     donationData.nombre = nombre;
 }
 
+function mostrarConfirmacion(mensaje) {
+    return new Promise((resolve) => {
+
+        const modal = document.getElementById("custom-modal");
+
+        // ✅ seguridad (evita que truene si falta el modal)
+        if (!modal) {
+            resolve(confirm(mensaje)); // fallback
+            return;
+        }
+
+        const msg = document.getElementById("modal-message");
+        const btnOk = document.getElementById("modal-confirm");
+        const btnCancel = document.getElementById("modal-cancel");
+
+        msg.innerText = mensaje;
+
+        modal.classList.remove("hidden");
+
+        const limpiar = () => {
+            modal.classList.add("hidden");
+            btnOk.onclick = null;
+            btnCancel.onclick = null;
+        };
+
+        btnOk.onclick = () => {
+            limpiar();
+            resolve(true);
+        };
+
+        btnCancel.onclick = () => {
+            limpiar();
+            resolve(false);
+        };
+    });
+}
+
 // ========================================
 // ✅ PAGOS CLUBS
 // ========================================
