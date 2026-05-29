@@ -383,7 +383,7 @@ async function ejecutarPagoEntretenimiento(servicioId, nombreServicio) {
 
                     <div class="payment-body">
                         <h3>${nombreServicio}</h3>
-                        <p class="error-text">Operación no autorizada</p>
+                        <p class="error-text">Saldo Insuficiente</p>
                     </div>
                 </div>
             `;
@@ -704,7 +704,7 @@ async function pagarClub(servicioId, nombre) {
 
                     <div class="payment-body">
                         <h3>${nombre}</h3>
-                        <p class="error-text">Operación no autorizada</p>
+                        <p class="error-text">Saldo Insuficiente</p>
                     </div>
                 </div>
             `;
