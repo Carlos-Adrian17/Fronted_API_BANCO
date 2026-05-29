@@ -238,32 +238,56 @@ async function handleDeposit(e) {
 async function handleTransfer(e) {
     e.preventDefault();
 
-    const destino = parseInt(document.getElementById("transfer-account").value);
+    // ✅ obtener numero de cuenta COMO STRING
+    const destino = document.getElementById("transfer-account").value.trim();
+
+    // ✅ monto
     const monto = parseFloat(document.getElementById("transfer-amount").value);
 
-    if (!destino || isNaN(destino)) {
+    // ✅ validación numero cuenta
+    if (!destino) {
         showToast("Número de cuenta inválido", "error");
         return;
     }
 
+    // ✅ validación monto
+    if (isNaN(monto) || monto <= 0) {
+        showToast("Monto inválido", "error");
+        return;
+    }
+
+    // ✅ validar saldo en frontend
     if (monto > appState.saldo) {
-        showToast("Fondos disponibles insuficientes", "error");
+        showToast("Fondos insuficientes", "error");
         return;
     }
 
     try {
-         const res = await fetch(`${API}/api/Cuenta/transferir-numero?origenId=${appState.cuentaId}&numeroCuentaDestino=${destino}&monto=${monto}`, {
+
+        // ✅ LLAMADA CORRECTA AL BACKEND
+        const res = await fetch(`${API}/api/Cuenta/transferir-numero?origenId=${appState.cuentaId}&numeroCuentaDestino=${destino}&monto=${monto}`, {
             method: "POST"
         });
 
-        if (!res.ok) throw new Error();
+        // ✅ manejo de error
+        if (!res.ok) {
+            const err = await res.json();
+            showToast(err.error || "Error en transferencia", "error");
+            return;
+        }
 
-        showToast("Transferencia Realizada con Éxito ✅", "success");
+        // ✅ éxito
+        showToast("Transferencia realizada correctamente ✅", "success");
+
+        // ✅ limpiar formulario
         document.getElementById("form-transfer").reset();
+
+        // ✅ actualizar saldo
         await cargarDatos();
 
-    } catch {
-        showToast("Error en transferencia", "error");
+    } catch (error) {
+        console.error(error);
+        showToast("Error de conexión con el servidor", "error");
     }
 }
 
@@ -343,72 +367,6 @@ async function ejecutarPagoEntretenimiento(servicioId, nombreServicio) {
         resultadoDiv.innerHTML = "<p style='color: var(--accent-crimson);'>⚠️ Error crítico de comunicación con la API de Entretenimiento</p>";
         console.error(error);
         showToast("Error de respuesta en pasarela", "error");
-    }
-}
-
-async function obtenerHistorialEntretenimiento() {
-
-    const resultadoDiv = document.getElementById("resultado-entretenimiento");
-
-    resultadoDiv.style.display = "block";
-    resultadoDiv.innerHTML = "<p><i class='fa-solid fa-circle-notch fa-spin'></i> Extrayendo historial de pagos desde el nodo externo...</p>";
-
-    try {
-
-        const response = await fetch("https://webapipagon5214.azurewebsites.net/api/Pagos");
-        const data = await response.json();
-
-        // ✅ CORRECCIÓN: FILTRAR SOLO PAGOS DEL USUARIO ACTUAL
-        const dataFiltrado = data.filter(pago => pago.usuarioBancoId == appState.cuentaId);
-
-        // ✅ VALIDACIÓN CORREGIDA
-        if (!dataFiltrado || dataFiltrado.length === 0) {
-            resultadoDiv.innerHTML = "<p>No se registran transacciones externas en la pasarela actual.</p>";
-            return;
-        }
-
-        let html = `
-            <h3 style="margin-bottom: 1.2rem;">Historial de Transacciones de Entretenimiento</h3>
-            <div class="table-responsive">
-                <table class="premium-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Servicio</th>
-                            <th>Monto</th>
-                            <th>Estado Transacción</th>
-                            <th>Fecha</th>
-                            <th>Referencia</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-        `;
-
-        // ✅ LOOP CORREGIDO
-        dataFiltrado.forEach(pago => {
-
-            const statusClass = pago.estado === "Aprobado" ? "txt-aprobado" : "txt-rechazado";
-
-            html += `
-                <tr>
-                    <td>${pago.id}</td>
-                    <td><strong>${pago.servicio}</strong></td>
-                    <td>Q${formatMoney(pago.monto || 0)}</td>
-                    <td class="${statusClass}">${pago.estado}</td>
-                    <td>${new Date(pago.fecha).toLocaleDateString("es-GT")}</td>
-                    <td>${pago.referenciaBanco || "N/A"}</td>
-                </tr>
-            `;
-        });
-
-        html += "</tbody></table></div>";
-
-        resultadoDiv.innerHTML = html;
-
-    } catch (error) {
-
-        resultadoDiv.innerHTML = "<p style='color: var(--accent-crimson);'>⚠️ Imposible recuperar el log consolidado de la API externa</p>";
-        console.error(error);
     }
 }
 
@@ -602,7 +560,7 @@ function closeDonationsSubPage(){
 }
 
 // ========================================
-// ✅ PAGOS CLUBS + HISTORIAL
+// ✅ PAGOS CLUBS
 // ========================================
 async function pagarClub(servicioId, nombre){
 
@@ -651,151 +609,81 @@ async function pagarClub(servicioId, nombre){
     }
 }
 
-async function obtenerHistorialClubs(){
-
-    const resultadoDiv = document.getElementById("resultado-clubs");
-
-    resultadoDiv.style.display = "block";
-    resultadoDiv.innerHTML = "Cargando historial...";
-
-    try{
-
-        const res = await fetch("https://apiclub-arg4e0cravhhgxfa.mexicocentral-01.azurewebsites.net/api/Pagos");
-        const data = await res.json();
-
-        const filtrado = data.filter(p => p.usuarioBancoId == appState.cuentaId);
-
-        if(filtrado.length === 0){
-            resultadoDiv.innerHTML = "Sin registros";
-            return;
-        }
-
-        let html = "<table class='premium-table'><tr><th>Servicio</th><th>Monto</th></tr>";
-
-        filtrado.forEach(p=>{
-            html+=`
-            <tr>
-                <td>${p.servicio || p.nombre || "Servicio Club"}</td>
-                <td>Q${formatMoney(p.monto)}</td>
-            </tr>`;
-        });
-
-        html+="</table>";
-        resultadoDiv.innerHTML = html;
-
-    }catch{
-        resultadoDiv.innerHTML = "Error al cargar historial";
-    }
-}
-
 // ========================================
-// ✅ DONACIONES + HISTORIAL (CORREGIDO)
+// ✅ DONACIONES
 // ========================================
 
 // ✅ ELIMINAR donar() (ya no se usa confirm ni prompt)
+        async function procesarDonacion(e){
+            e.preventDefault();
 
-async function procesarDonacion(e){
-    e.preventDefault();
+            // ✅ validar institución
+            if (!donationData.institucionId) {
+                showToast("Seleccione una institución", "error");
+                return;
+            }
 
-    if (!donationData.institucionId) {
-        showToast("Seleccione una institución", "error");
-        return;
-    }
+            // ✅ obtener monto
+            const montoInput = document.getElementById("donation-amount");
+            const monto = parseFloat(montoInput.value);
 
-    const monto = parseFloat(document.getElementById("donation-amount").value);
+            // ✅ validar monto
+            if (isNaN(monto) || monto <= 0) {
+                showToast("Monto inválido", "error");
+                return;
+            }
 
-    if (!monto || monto <= 0) {
-        showToast("Monto inválido", "error");
-        return;
-    }
+            // ✅ validar saldo
+            if (appState.saldo < monto) {
+                showToast("Saldo insuficiente", "error");
+                return;
+            }
 
-    if (appState.saldo < monto) {
-        showToast("Saldo insuficiente", "error");
-        return;
-    }
+            try {
 
-    try{
 
+            
             const res = await fetch("https://donacionesapi.azurewebsites.net/api/Donaciones/procesar", {
             method: "POST",
-            mode: "cors", // 🔥 CLAVE
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                institucionId: 1,
-                cuentaId: 8,
-                montoTotal: parseFloat(monto)
+                institucionId: Number(donationData.institucionId),
+                cuentaId: appState.cuentaId,
+                montoTotal: Number(monto)
             })
         });
 
-       
+        // ✅ leer respuesta correctamente
+        const text = await res.text();
+        console.log("STATUS:", res.status);
+        console.log("RESPUESTA:", text);
+
+        // ✅ manejo de error API
         if (!res.ok) {
-            const errorText = await res.text();
-
-            console.log("STATUS:", res.status);
-            console.log("ERROR API:", errorText);
-
-            showToast("API: " + errorText, "error");
-
+            showToast("Error API: " + text, "error");
             return;
         }
 
-
+        // ✅ éxito
         showToast("Donación realizada ✅", "success");
 
         // ✅ limpiar formulario
-        document.getElementById("form-donation").reset();
+        montoInput.value = "";
 
-        // ✅ ocultar formulario opcional
+        // ✅ ocultar formulario
         document.getElementById("donation-form-card").classList.add("hidden");
 
+        // ✅ resetear institución (importante)
+        donationData = { institucionId: null, nombre: "" };
+
+        // ✅ actualizar saldo
         await actualizarSaldoVista();
+
 
     } catch (error) {
         console.error(error);
         showToast("Error en donación", "error");
-    }
-}
-
-
-// ========================================
-// ✅ HISTORIAL DONACIONES (MEJORADO)
-// ========================================
-async function obtenerHistorialDonaciones(){
-
-    const resultadoDiv = document.getElementById("resultado-donaciones");
-
-    resultadoDiv.style.display = "block";
-    resultadoDiv.innerHTML = "Cargando historial...";
-
-    try{
-
-        const res = await fetch("https://donacionesapi.azurewebsites.net/api/Donaciones");
-        const data = await res.json();
-
-        const filtrado = data.filter(p => p.cuentaId == appState.cuentaId);
-
-        if (!filtrado || filtrado.length === 0) {
-            resultadoDiv.innerHTML = "Sin registros";
-            return;
-        }
-
-        let html = "<table class='premium-table'><tr><th>Institución</th><th>Monto</th></tr>";
-
-        filtrado.forEach(p=>{
-            html+=`
-            <tr>
-                <td>${p.institucion || p.nombre || "Donación"}</td>
-                <td>Q${formatMoney(p.monto || 0)}</td>
-            </tr>`;
-        });
-
-        html+="</table>";
-        resultadoDiv.innerHTML = html;
-
-    }catch(error){
-        console.error(error);
-        resultadoDiv.innerHTML = "Error al cargar historial";
     }
 }
