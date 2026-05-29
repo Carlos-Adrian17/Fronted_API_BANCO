@@ -316,7 +316,6 @@ function closeEntertainmentSubPage() {
 // ========================================
 async function ejecutarPagoEntretenimiento(servicioId, nombreServicio) {
 
-    // ✅ actualizar saldo antes
     await actualizarSaldoVista();
 
     const seguro = confirm(`¿Desea autorizar el pago para ${nombreServicio}?`);
@@ -345,21 +344,49 @@ async function ejecutarPagoEntretenimiento(servicioId, nombreServicio) {
         });
 
         const data = await response.json();
-
-        console.log("RESPUESTA API ENTRETENIMIENTO:", data);
+        console.log("RESPUESTA ENTRETENIMIENTO:", data);
 
         if (data.pago && data.pago.estado === "Aprobado") {
 
-            resultadoDiv.innerHTML = "✅ Pago exitoso";
-            showToast("Pago aprobado ✅", "success");
+            const monto = data.pago.monto || "0.00";
+            const fecha = new Date().toLocaleString();
 
-            // ✅ actualizar saldo después
+            resultadoDiv.innerHTML = `
+                <div class="payment-card success">
+                    <div class="payment-header">
+                        <i class="fa-solid fa-check-circle"></i>
+                        <span>PAGO APROBADO</span>
+                    </div>
+
+                    <div class="payment-body">
+                        <h3>${nombreServicio}</h3>
+                        <p class="amount">Q${monto}</p>
+                    </div>
+
+                    <div class="payment-footer">
+                        <span>${fecha}</span>
+                    </div>
+                </div>
+            `;
+
+            showToast("Pago aprobado ✅", "success");
             await actualizarSaldoVista();
 
         } else {
 
-            const motivo = data.pago?.motivoRechazo || "Rechazado";
-            resultadoDiv.innerHTML = "❌ " + motivo;
+            resultadoDiv.innerHTML = `
+                <div class="payment-card error">
+                    <div class="payment-header">
+                        <i class="fa-solid fa-xmark-circle"></i>
+                        <span>PAGO RECHAZADO</span>
+                    </div>
+
+                    <div class="payment-body">
+                        <h3>${nombreServicio}</h3>
+                        <p class="error-text">Operación no autorizada</p>
+                    </div>
+                </div>
+            `;
 
             showToast("Pago rechazado", "error");
         }
@@ -367,8 +394,17 @@ async function ejecutarPagoEntretenimiento(servicioId, nombreServicio) {
     } catch (error) {
         console.error("ERROR ENTRETENIMIENTO:", error);
 
-        resultadoDiv.innerHTML = "Error de conexión";
-        showToast("Error en API", "error");
+        resultadoDiv.innerHTML = `
+            <div class="payment-card error">
+                <div class="payment-header">
+                    <i class="fa-solid fa-xmark-circle"></i>
+                    <span>ERROR</span>
+                </div>
+                <div class="payment-body">
+                    <p>No se pudo conectar con el servicio</p>
+                </div>
+            </div>
+        `;
     }
 }
 
@@ -564,9 +600,8 @@ function closeDonationsSubPage(){
 // ========================================
 // ✅ PAGOS CLUBS
 // ========================================
-async function pagarClub(servicioId, nombre){
+async function pagarClub(servicioId, nombre) {
 
-    // ✅ actualizar saldo
     await actualizarSaldoVista();
 
     const confirmar = confirm(`¿Desea pagar ${nombre}?`);
@@ -581,11 +616,13 @@ async function pagarClub(servicioId, nombre){
     resultadoDiv.style.display = "block";
     resultadoDiv.innerHTML = "Procesando pago...";
 
-    try{
+    try {
 
         const response = await fetch("https://apiclub-arg4e0cravhhgxfa.mexicocentral-01.azurewebsites.net/api/Pagos/pagar", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "application/json"
+            },
             body: JSON.stringify({
                 servicioId: servicioId,
                 usuarioBancoId: appState.cuentaId
@@ -593,28 +630,67 @@ async function pagarClub(servicioId, nombre){
         });
 
         const data = await response.json();
-
         console.log("RESPUESTA CLUB:", data);
 
         if (data.pago && data.pago.estado === "Aprobado") {
 
-            resultadoDiv.innerHTML = "✅ Pago exitoso";
-            showToast("Pago aprobado ✅", "success");
+            const monto = data.pago.monto || "0.00";
+            const fecha = new Date().toLocaleString();
 
+            resultadoDiv.innerHTML = `
+                <div class="payment-card success">
+                    <div class="payment-header">
+                        <i class="fa-solid fa-check-circle"></i>
+                        <span>PAGO APROBADO</span>
+                    </div>
+
+                    <div class="payment-body">
+                        <h3>${nombre}</h3>
+                        <p class="amount">Q${monto}</p>
+                    </div>
+
+                    <div class="payment-footer">
+                        <span>${fecha}</span>
+                    </div>
+                </div>
+            `;
+
+            showToast("Pago aprobado ✅", "success");
             await actualizarSaldoVista();
 
         } else {
 
-            resultadoDiv.innerHTML = "❌ Pago rechazado";
-            showToast("Pago rechazado", "error");
+            resultadoDiv.innerHTML = `
+                <div class="payment-card error">
+                    <div class="payment-header">
+                        <i class="fa-solid fa-xmark-circle"></i>
+                        <span>PAGO RECHAZADO</span>
+                    </div>
 
+                    <div class="payment-body">
+                        <h3>${nombre}</h3>
+                        <p class="error-text">Operación no autorizada</p>
+                    </div>
+                </div>
+            `;
+
+            showToast("Pago rechazado", "error");
         }
 
-    } catch (error){
+    } catch (error) {
         console.error("ERROR CLUB:", error);
 
-        resultadoDiv.innerHTML = "Error conexión";
-        showToast("Error en API", "error");
+        resultadoDiv.innerHTML = `
+            <div class="payment-card error">
+                <div class="payment-header">
+                    <i class="fa-solid fa-xmark-circle"></i>
+                    <span>ERROR</span>
+                </div>
+                <div class="payment-body">
+                    <p>No se pudo conectar con el servicio</p>
+                </div>
+            </div>
+        `;
     }
 }
 
