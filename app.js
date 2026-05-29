@@ -315,20 +315,24 @@ function closeEntertainmentSubPage() {
 // INTEGRACIÓN PASARELA ENTRETENIMIENTO EXTERNA
 // ========================================
 async function ejecutarPagoEntretenimiento(servicioId, nombreServicio) {
-    // MÉTODO DE CONFIRMACIÓN DE SEGURIDAD
-    const seguro = confirm(`¿Desea autorizar el pago seguro para la plataforma ${nombreServicio}?`);
+
+    // ✅ actualizar saldo antes
+    await actualizarSaldoVista();
+
+    const seguro = confirm(`¿Desea autorizar el pago para ${nombreServicio}?`);
     if (!seguro) return;
-    
+
     if (appState.saldo <= 0) {
-        showToast("Saldo insuficiente para pagar este servicio", "error");
+        showToast("Saldo insuficiente", "error");
         return;
     }
 
     const resultadoDiv = document.getElementById("resultado-entretenimiento");
     resultadoDiv.style.display = "block";
-    resultadoDiv.innerHTML = "<p><i class='fa-solid fa-circle-notch fa-spin'></i> Transmitiendo datos a la pasarela externa...</p>";
+    resultadoDiv.innerHTML = "Procesando pago...";
 
     try {
+
         const response = await fetch("https://webapipagon5214.azurewebsites.net/api/Pagos/pagar", {
             method: "POST",
             headers: {
@@ -342,31 +346,29 @@ async function ejecutarPagoEntretenimiento(servicioId, nombreServicio) {
 
         const data = await response.json();
 
+        console.log("RESPUESTA API ENTRETENIMIENTO:", data);
+
         if (data.pago && data.pago.estado === "Aprobado") {
-            resultadoDiv.innerHTML = `
-                <h3 style="color: var(--accent-emerald); margin-bottom: 0.8rem;"><i class="fa-solid fa-circle-check"></i> Pago Autorizado de Forma Exitosa</h3>
-                <p style="margin-bottom:0.4rem;"><strong>Servicio Vinculado:</strong> ${data.pago.servicio}</p>
-                <p style="margin-bottom:0.4rem;"><strong>Monto Liquidado:</strong> Q${data.pago.monto}</p>
-                <p><strong>Código Único Referencia Banco:</strong> ${data.pago.referenciaBanco}</p>
-            `;
-            showToast(`Pago de ${nombreServicio} Aprobado ✅`, "success");
 
-                    await actualizarSaldoVista();
-                }else {
+            resultadoDiv.innerHTML = "✅ Pago exitoso";
+            showToast("Pago aprobado ✅", "success");
 
-            const motivo = data.pago ? data.pago.motivoRechazo : "Fondos insuficientes detectados";
-            resultadoDiv.innerHTML = `
-                <h3 style="color: var(--accent-crimson); margin-bottom: 0.8rem;"><i class="fa-solid fa-circle-xmark"></i> Pago Denegado por la Entidad</h3>
-                <p style="margin-bottom:0.4rem;"><strong>Servicio:</strong> ${nombreServicio}</p>
-                <p><strong>Causa de Rechazo:</strong> ${motivo}</p>
-            `;
-            showToast("La transacción externa fue rechazada", "error");
+            // ✅ actualizar saldo después
+            await actualizarSaldoVista();
+
+        } else {
+
+            const motivo = data.pago?.motivoRechazo || "Rechazado";
+            resultadoDiv.innerHTML = "❌ " + motivo;
+
+            showToast("Pago rechazado", "error");
         }
 
     } catch (error) {
-        resultadoDiv.innerHTML = "<p style='color: var(--accent-crimson);'>⚠️ Error crítico de comunicación con la API de Entretenimiento</p>";
-        console.error(error);
-        showToast("Error de respuesta en pasarela", "error");
+        console.error("ERROR ENTRETENIMIENTO:", error);
+
+        resultadoDiv.innerHTML = "Error de conexión";
+        showToast("Error en API", "error");
     }
 }
 
@@ -564,17 +566,20 @@ function closeDonationsSubPage(){
 // ========================================
 async function pagarClub(servicioId, nombre){
 
-    const confirmar = confirm(`¿Desea autorizar el pago de ${nombre}?`);
+    // ✅ actualizar saldo
+    await actualizarSaldoVista();
+
+    const confirmar = confirm(`¿Desea pagar ${nombre}?`);
     if (!confirmar) return;
 
     if (appState.saldo <= 0) {
-        showToast("No tienes saldo disponible", "error");
+        showToast("Saldo insuficiente", "error");
         return;
     }
 
     const resultadoDiv = document.getElementById("resultado-clubs");
     resultadoDiv.style.display = "block";
-    resultadoDiv.innerHTML = "<p>Cargando...</p>";
+    resultadoDiv.innerHTML = "Procesando pago...";
 
     try{
 
@@ -589,25 +594,30 @@ async function pagarClub(servicioId, nombre){
 
         const data = await response.json();
 
+        console.log("RESPUESTA CLUB:", data);
+
         if (data.pago && data.pago.estado === "Aprobado") {
 
-            resultadoDiv.innerHTML = `
-                <h3 style="color: #00c864;">✅ Pago exitoso</h3>
-                <p><strong>Servicio:</strong> ${nombre}</p>
-                <p><strong>Monto:</strong> Q${data.pago.monto}</p>
-                <p><strong>Referencia:</strong> ${data.pago.referenciaBanco}</p>
-            `;
+            resultadoDiv.innerHTML = "✅ Pago exitoso";
+            showToast("Pago aprobado ✅", "success");
 
             await actualizarSaldoVista();
 
         } else {
-            resultadoDiv.innerHTML = `<p style="color:red;">Pago rechazado</p>`;
+
+            resultadoDiv.innerHTML = "❌ Pago rechazado";
+            showToast("Pago rechazado", "error");
+
         }
 
-    } catch {
-        resultadoDiv.innerHTML = `<p style="color:red;">Error en conexión</p>`;
+    } catch (error){
+        console.error("ERROR CLUB:", error);
+
+        resultadoDiv.innerHTML = "Error conexión";
+        showToast("Error en API", "error");
     }
 }
+
 
 // ========================================
 // ✅ DONACIONES
