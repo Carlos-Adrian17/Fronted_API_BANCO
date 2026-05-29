@@ -584,17 +584,52 @@ function openDonationsSubPage(){
     document.getElementById("payments-donations-view").classList.remove("hidden");
 }
 
-function abrirFormularioDonacion(id, nombre){
-    donationData.institucionId = id;
-    donationData.nombre = nombre;
-
-    document.getElementById("donation-form-card").classList.remove("hidden");
-    document.getElementById("donation-institucion").value = nombre;
-}
-
 function closeDonationsSubPage(){
     document.getElementById("payments-donations-view").classList.add("hidden");
     document.getElementById("payments-categories-view").classList.remove("hidden");
+
+    // ✅ ocultar formulario
+    const formCard = document.getElementById("donation-form-card");
+    if (formCard) {
+        formCard.classList.add("hidden");
+    }
+
+    // ✅ limpiar resultado visual
+    const result = document.getElementById("donation-result");
+    if (result) {
+        result.innerHTML = "";
+    }
+
+    // ✅ limpiar campos del formulario
+    const monto = document.getElementById("donation-amount");
+    const institucion = document.getElementById("donation-institucion");
+
+    if (monto) monto.value = "";
+    if (institucion) institucion.value = "";
+
+    // ✅ reset estado interno
+    donationData = { institucionId: null, nombre: "" };
+}
+
+
+function abrirFormularioDonacion(id, nombre) {
+
+    // ✅ limpiar resultado anterior (MEJORA IMPORTANTE)
+    const result = document.getElementById("donation-result");
+    if (result) {
+        result.innerHTML = "";
+    }
+
+    const card = document.getElementById("donation-form-card");
+    const input = document.getElementById("donation-institucion");
+
+    // ✅ mostrar formulario
+    card.classList.remove("hidden");
+
+    // ✅ setear datos
+    input.value = nombre;
+    donationData.institucionId = id;
+    donationData.nombre = nombre;
 }
 
 // ========================================
@@ -698,38 +733,34 @@ async function pagarClub(servicioId, nombre) {
 // ========================================
 // ✅ DONACIONES
 // ========================================
+async function procesarDonacion(e){
+    e.preventDefault();
 
-// ✅ ELIMINAR donar() (ya no se usa confirm ni prompt)
-        async function procesarDonacion(e){
-            e.preventDefault();
+    if (!donationData.institucionId) {
+        showToast("Seleccione una institución", "error");
+        return;
+    }
 
-            // ✅ validar institución
-            if (!donationData.institucionId) {
-                showToast("Seleccione una institución", "error");
-                return;
-            }
+    const montoInput = document.getElementById("donation-amount");
+    const monto = parseFloat(montoInput.value);
 
-            // ✅ obtener monto
-            const montoInput = document.getElementById("donation-amount");
-            const monto = parseFloat(montoInput.value);
+    if (isNaN(monto) || monto <= 0) {
+        showToast("Monto inválido", "error");
+        return;
+    }
 
-            // ✅ validar monto
-            if (isNaN(monto) || monto <= 0) {
-                showToast("Monto inválido", "error");
-                return;
-            }
+    if (appState.saldo < monto) {
+        showToast("Saldo insuficiente", "error");
+        return;
+    }
 
-            // ✅ validar saldo
-            if (appState.saldo < monto) {
-                showToast("Saldo insuficiente", "error");
-                return;
-            }
+    const card = document.getElementById("donation-form-card");
 
-            try {
+    card.innerHTML = "Procesando donación...";
 
+    try {
 
-            
-            const res = await fetch("https://donacionesapi.azurewebsites.net/api/Donaciones/procesar", {
+        const res = await fetch("https://donacionesapi.azurewebsites.net/api/Donaciones/procesar", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -741,35 +772,71 @@ async function pagarClub(servicioId, nombre) {
             })
         });
 
-        // ✅ leer respuesta correctamente
-        const text = await res.text();
-        console.log("STATUS:", res.status);
-        console.log("RESPUESTA:", text);
+            const data = await res.json();
+            console.log("RESPUESTA JSON:", data);
 
-        // ✅ manejo de error API
-        if (!res.ok) {
-            showToast("Error API: " + text, "error");
-            return;
-        }
+            // ✅ manejo de error
+            if (!res.ok) {
 
-        // ✅ éxito
+                const mensaje = data.mensaje || data.error || "Error en donación";
+
+                card.innerHTML = `
+                    <div class="payment-card error">
+                        <div class="payment-header">
+                            <i class="fa-solid fa-xmark-circle"></i>
+                            <span>DONACIÓN FALLIDA</span>
+                        </div>
+                        <div class="payment-body">
+                            <p>${mensaje}</p>
+                        </div>
+                    </div>
+                `;
+
+                showToast(mensaje, "error");
+                return;
+            }
+
+        const fecha = new Date().toLocaleString();
+
+            document.getElementById("donation-result").innerHTML = `
+                <div class="payment-card success">
+                    <div class="payment-header">
+                        <i class="fa-solid fa-hand-holding-heart"></i>
+                        <span>DONACIÓN EXITOSA</span>
+                    </div>
+
+                    <div class="payment-body">
+                        <h3>${donationData.nombre}</h3>
+                        <p class="amount">Q${monto.toFixed(2)}</p>
+                    </div>
+
+                    <div class="payment-footer">
+                        <span>${fecha}</span>
+                    </div>
+                </div>
+            `;
+
         showToast("Donación realizada ✅", "success");
 
-        // ✅ limpiar formulario
         montoInput.value = "";
 
-        // ✅ ocultar formulario
-        document.getElementById("donation-form-card").classList.add("hidden");
-
-        // ✅ resetear institución (importante)
         donationData = { institucionId: null, nombre: "" };
 
-        // ✅ actualizar saldo
         await actualizarSaldoVista();
-
 
     } catch (error) {
         console.error(error);
-        showToast("Error en donación", "error");
+
+        card.innerHTML = `
+            <div class="payment-card error">
+                <div class="payment-header">
+                    <i class="fa-solid fa-xmark-circle"></i>
+                    <span>ERROR</span>
+                </div>
+                <div class="payment-body">
+                    <p>No se pudo conectar</p>
+                </div>
+            </div>
+        `;
     }
 }

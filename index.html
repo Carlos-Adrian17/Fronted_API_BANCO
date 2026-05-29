@@ -378,34 +378,40 @@
                         <!-- ✅ FORMULARIO VISUAL (ESTO FALTABA) -->
                         <div id="donation-form-card" class="card hidden" style="margin-top: 2rem;">
 
-                            <h3>Realizar Donación</h3>
+                            <!-- ✅ FORMULARIO (NO SE BORRA) -->
+                            <div id="donation-form-container">
 
-                            <form id="form-donation" style="margin-top: 1rem;">
-                                
-                                <div class="input-group">
-                                    <label>Institución</label>
-                                    <div class="input-wrapper">
-                                        <input id="donation-institucion" readonly>
+                                <h3>Realizar Donación</h3>
+
+                                <form id="form-donation" style="margin-top: 1rem;">
+                                    
+                                    <div class="input-group">
+                                        <label>Institución</label>
+                                        <div class="input-wrapper">
+                                            <input id="donation-institucion" readonly placeholder="Seleccione institución">
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div class="input-group">
-                                    <label>Monto a Donar (Q)</label>
-                                    <div class="input-wrapper">
-                                        <i class="fa-solid fa-heart"></i>
-                                        <input type="number" step="0.01" id="donation-amount" placeholder="0.00" required>
+                                    <div class="input-group">
+                                        <label>Monto a Donar (Q)</label>
+                                        <div class="input-wrapper">
+                                            <i class="fa-solid fa-heart"></i>
+                                            <input type="number" step="0.01" min="1" id="donation-amount" placeholder="0.00" required>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <button type="submit" class="btn btn-primary btn-full">
-                                    Confirmar Donación
-                                </button>
+                                    <button type="submit" class="btn btn-primary btn-full">
+                                        Confirmar Donación
+                                    </button>
 
-                            </form>
+                                </form>
+
+                            </div>
+
+                            <!-- ✅ RESULTADO DE LA DONACIÓN -->
+                            <div id="donation-result" style="margin-top: 1.5rem;"></div>
 
                         </div>
-
-                    </div>
 
             </section>
 
