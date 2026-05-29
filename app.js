@@ -716,13 +716,13 @@ async function procesarDonacion(e){
 
     try{
 
-        const res = await fetch("https://donacionesapi.azurewebsites.net/api/Donaciones", {
+            const res = await fetch("https://donacionesapi.azurewebsites.net/api/Donaciones/procesar", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 institucionId: donationData.institucionId,
                 cuentaId: appState.cuentaId,
-                monto: monto
+                montoTotal: monto
             })
         });
 
