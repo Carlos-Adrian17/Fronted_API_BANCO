@@ -10,6 +10,13 @@ let appState = {
     movimientos: []
 };
 
+
+let donationData = {
+    institucionId: null,
+    nombre: ""
+};
+
+
 // Objeto Global para controlar la instancia del gráfico dinámico
 let financialChartInstance = null;
 
@@ -52,6 +59,7 @@ function setupEventListeners() {
     document.getElementById("form-deposit")?.addEventListener("submit", handleDeposit);
 
     document.getElementById("btn-logout")?.addEventListener("click", logout);
+    document.getElementById("form-donation")?.addEventListener("submit", procesarDonacion);
 }
 
 // ========================================
@@ -230,8 +238,13 @@ async function handleDeposit(e) {
 async function handleTransfer(e) {
     e.preventDefault();
 
-    const destino = document.getElementById("transfer-account").value;
+    const destino = parseInt(document.getElementById("transfer-account").value);
     const monto = parseFloat(document.getElementById("transfer-amount").value);
+
+    if (!destino || isNaN(destino)) {
+        showToast("Número de cuenta inválido", "error");
+        return;
+    }
 
     if (monto > appState.saldo) {
         showToast("Fondos disponibles insuficientes", "error");
@@ -247,11 +260,10 @@ async function handleTransfer(e) {
 
         showToast("Transferencia Realizada con Éxito ✅", "success");
         document.getElementById("form-transfer").reset();
-        cargarDatos();
-        navigateToView("view-dashboard");
+        await cargarDatos();
 
     } catch {
-        showToast("Error en transferencia. Verifique el ID destino.", "error");
+        showToast("Error en transferencia", "error");
     }
 }
 
@@ -576,6 +588,14 @@ function openDonationsSubPage(){
     document.getElementById("payments-donations-view").classList.remove("hidden");
 }
 
+function abrirFormularioDonacion(id, nombre){
+    donationData.institucionId = id;
+    donationData.nombre = nombre;
+
+    document.getElementById("donation-form-card").classList.remove("hidden");
+    document.getElementById("donation-institucion").value = nombre;
+}
+
 function closeDonationsSubPage(){
     document.getElementById("payments-donations-view").classList.add("hidden");
     document.getElementById("payments-categories-view").classList.remove("hidden");
@@ -669,41 +689,69 @@ async function obtenerHistorialClubs(){
 }
 
 // ========================================
-// ✅ DONACIONES + HISTORIAL
+// ✅ DONACIONES + HISTORIAL (CORREGIDO)
 // ========================================
-async function donar(servicioId, nombre){
 
-    const confirmar = confirm(`¿Desea donar a ${nombre}?`);
-    if (!confirmar) return;
+// ✅ ELIMINAR donar() (ya no se usa confirm ni prompt)
 
-    const monto = prompt("Ingrese el monto a donar:");
+async function procesarDonacion(e){
+    e.preventDefault();
+
+    if (!donationData.institucionId) {
+        showToast("Seleccione una institución", "error");
+        return;
+    }
+
+    const monto = parseFloat(document.getElementById("donation-amount").value);
+
     if (!monto || monto <= 0) {
         showToast("Monto inválido", "error");
         return;
     }
 
+    if (appState.saldo < monto) {
+        showToast("Saldo insuficiente", "error");
+        return;
+    }
+
     try{
 
-        await fetch("https://donacionesapi.azurewebsites.net/api/Donaciones", {
+        const res = await fetch("https://donacionesapi.azurewebsites.net/api/Donaciones", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                institucionId: servicioId,
+                institucionId: donationData.institucionId,
                 cuentaId: appState.cuentaId,
-                monto: parseFloat(monto)
+                monto: monto
             })
         });
 
-        showToast(`Donación realizada ✅`, "success");
+        if (!res.ok) {
+            const errorText = await res.text();
+            console.error(errorText);
+            throw new Error();
+        }
+
+        showToast("Donación realizada ✅", "success");
+
+        // ✅ limpiar formulario
+        document.getElementById("form-donation").reset();
+
+        // ✅ ocultar formulario opcional
+        document.getElementById("donation-form-card").classList.add("hidden");
 
         await actualizarSaldoVista();
 
     } catch (error) {
+        console.error(error);
         showToast("Error en donación", "error");
     }
 }
 
 
+// ========================================
+// ✅ HISTORIAL DONACIONES (MEJORADO)
+// ========================================
 async function obtenerHistorialDonaciones(){
 
     const resultadoDiv = document.getElementById("resultado-donaciones");
@@ -718,7 +766,7 @@ async function obtenerHistorialDonaciones(){
 
         const filtrado = data.filter(p => p.cuentaId == appState.cuentaId);
 
-        if(filtrado.length === 0){
+        if (!filtrado || filtrado.length === 0) {
             resultadoDiv.innerHTML = "Sin registros";
             return;
         }
@@ -729,14 +777,15 @@ async function obtenerHistorialDonaciones(){
             html+=`
             <tr>
                 <td>${p.institucion || p.nombre || "Donación"}</td>
-                <td>Q${formatMoney(p.monto)}</td>
+                <td>Q${formatMoney(p.monto || 0)}</td>
             </tr>`;
         });
 
         html+="</table>";
         resultadoDiv.innerHTML = html;
 
-    }catch{
+    }catch(error){
+        console.error(error);
         resultadoDiv.innerHTML = "Error al cargar historial";
     }
 }
