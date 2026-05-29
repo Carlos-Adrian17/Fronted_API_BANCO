@@ -721,7 +721,7 @@ async function procesarDonacion(e){
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 institucionId: donationData.institucionId,
-                cuentaId: appState.cuentaId,
+                cuentaId: 8,
                 montoTotal: monto
             })
         });
