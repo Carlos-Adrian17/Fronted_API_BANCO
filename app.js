@@ -590,9 +590,13 @@ async function pagarClub(servicioId, nombre){
     if (!confirmar) return;
 
     if (appState.saldo <= 0) {
-        showToast("No tienes saldo disponible para este pago", "error");
+        showToast("No tienes saldo disponible", "error");
         return;
     }
+
+    const resultadoDiv = document.getElementById("resultado-clubs");
+    resultadoDiv.style.display = "block";
+    resultadoDiv.innerHTML = "<p>Cargando...</p>";
 
     try{
 
@@ -609,17 +613,21 @@ async function pagarClub(servicioId, nombre){
 
         if (data.pago && data.pago.estado === "Aprobado") {
 
-            showToast(`Pago aprobado ✅`, "success");
+            resultadoDiv.innerHTML = `
+                <h3 style="color: #00c864;">✅ Pago exitoso</h3>
+                <p><strong>Servicio:</strong> ${nombre}</p>
+                <p><strong>Monto:</strong> Q${data.pago.monto}</p>
+                <p><strong>Referencia:</strong> ${data.pago.referenciaBanco}</p>
+            `;
 
-          await actualizarSaldoVista();
+            await actualizarSaldoVista();
 
         } else {
-            showToast("Pago rechazado", "error");
+            resultadoDiv.innerHTML = `<p style="color:red;">Pago rechazado</p>`;
         }
 
-    } catch (error) {
-        console.error(error);
-        showToast("Error en pago club", "error");
+    } catch {
+        resultadoDiv.innerHTML = `<p style="color:red;">Error en conexión</p>`;
     }
 }
 
@@ -667,9 +675,10 @@ async function donar(servicioId, nombre){
 
     const confirmar = confirm(`¿Desea donar a ${nombre}?`);
     if (!confirmar) return;
-   
-    if (appState.saldo <= 0) {
-        showToast("No tienes saldo disponible para donar", "error");
+
+    const monto = prompt("Ingrese el monto a donar:");
+    if (!monto || monto <= 0) {
+        showToast("Monto inválido", "error");
         return;
     }
 
@@ -680,7 +689,8 @@ async function donar(servicioId, nombre){
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 institucionId: servicioId,
-                cuentaId: appState.cuentaId
+                cuentaId: appState.cuentaId,
+                monto: parseFloat(monto)
             })
         });
 
@@ -689,7 +699,6 @@ async function donar(servicioId, nombre){
         await actualizarSaldoVista();
 
     } catch (error) {
-        console.error(error);
         showToast("Error en donación", "error");
     }
 }
