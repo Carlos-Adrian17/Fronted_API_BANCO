@@ -159,13 +159,26 @@ function switchAuthForm(tipo) {
 // ENTRADA AL ENTORNO PRIVADO
 // ========================================
 function enterApp(cuenta) {
+
     document.getElementById("auth-container").classList.add("hidden");
     document.getElementById("main-app").classList.remove("hidden");
 
     document.getElementById("user-display-name").innerText = appState.cliente.nombre || "Cliente";
     document.getElementById("nombre-cliente").innerText = appState.cliente.nombre || "Cliente";
-    document.getElementById("numero-cuenta").innerText = cuenta.numeroTarjeta || cuenta.numeroCuenta || "Cta. Corporativa";
-    document.getElementById("cvv").innerText = cuenta.cvv || "992";
+
+    // ✅ número de tarjeta (ya lo tenías)
+    const numeroTarjetaEl = document.getElementById("numero-cuenta");
+    if (numeroTarjetaEl) {
+        numeroTarjetaEl.innerText = cuenta.numeroTarjeta || "**** ****";
+    }
+
+    // ✅ NUEVO SEGURO (NO rompe si no existe)
+    const numeroCuentaRealEl = document.getElementById("numero-cuenta-real");
+    if (numeroCuentaRealEl) {
+        numeroCuentaRealEl.innerText = cuenta.numeroCuenta || "----";
+    }
+
+    document.getElementById("cvv").innerText = cuenta.cvv || "000";
 
     cargarDatos();
 }
@@ -204,10 +217,14 @@ async function handleDeposit(e) {
     const montoInput = document.getElementById("deposit-amount");
     const monto = parseFloat(montoInput.value);
 
-    if (monto <= 0 || isNaN(monto)) {
+    // ✅ VALIDACIÓN CORRECTA
+    if (isNaN(monto) || monto <= 0) {
         showToast("Monto ingresado inválido", "error");
         return;
     }
+
+    const confirmar = await mostrarConfirmacion(`¿Desea depositar Q${formatMoney(monto)}?`);
+    if (!confirmar) return;
 
     try {
 
@@ -217,17 +234,15 @@ async function handleDeposit(e) {
 
         if (!res.ok) throw new Error();
 
-        showToast(`Depósito de Q${formatMoney(monto)} completado exitosamente`, "success");
+        showToast(`Depósito de Q${formatMoney(monto)} completado ✅`, "success");
 
         montoInput.value = "";
 
-        await cargarDatos(); // ✅ esto actualiza saldo REAL
+        await cargarDatos();
 
     } catch (error) {
-
         console.error(error);
         showToast("Error al procesar el depósito", "error");
-
     }
 }
 
@@ -238,51 +253,46 @@ async function handleDeposit(e) {
 async function handleTransfer(e) {
     e.preventDefault();
 
-    // ✅ obtener numero de cuenta COMO STRING
     const destino = document.getElementById("transfer-account").value.trim();
-
-    // ✅ monto
     const monto = parseFloat(document.getElementById("transfer-amount").value);
 
-    // ✅ validación numero cuenta
     if (!destino) {
         showToast("Número de cuenta inválido", "error");
         return;
     }
 
-    // ✅ validación monto
     if (isNaN(monto) || monto <= 0) {
         showToast("Monto inválido", "error");
         return;
     }
 
-    // ✅ validar saldo en frontend
     if (monto > appState.saldo) {
         showToast("Fondos insuficientes", "error");
         return;
     }
 
+    // ✅ NUEVO: CONFIRMACIÓN
+    const confirmar = await mostrarConfirmacion(
+        `¿Desea transferir Q${formatMoney(monto)} a la cuenta ${destino}?`
+    );
+    if (!confirmar) return;
+
     try {
 
-        // ✅ LLAMADA CORRECTA AL BACKEND
         const res = await fetch(`${API}/api/Cuenta/transferir-numero?origenId=${appState.cuentaId}&numeroCuentaDestino=${destino}&monto=${monto}`, {
             method: "POST"
         });
 
-        // ✅ manejo de error
         if (!res.ok) {
             const err = await res.json();
             showToast(err.error || "Error en transferencia", "error");
             return;
         }
 
-        // ✅ éxito
         showToast("Transferencia realizada correctamente ✅", "success");
 
-        // ✅ limpiar formulario
         document.getElementById("form-transfer").reset();
 
-        // ✅ actualizar saldo
         await cargarDatos();
 
     } catch (error) {
@@ -290,6 +300,7 @@ async function handleTransfer(e) {
         showToast("Error de conexión con el servidor", "error");
     }
 }
+
 
 // ========================================
 // CONTROL COGNITIVO INTERNO DE LA SUB-PÁGINA
